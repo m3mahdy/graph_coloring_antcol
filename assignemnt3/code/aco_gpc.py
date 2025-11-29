@@ -28,8 +28,7 @@ import random
 import threading
 from queue import Queue
 from copy import deepcopy
-import matplotlib.pyplot as plt
-import matplotlib.cm as cm
+from pathlib import Path
 
 
 class ACOGraphColoring:
@@ -47,7 +46,7 @@ class ACOGraphColoring:
     5. Track global best (minimum colors, zero conflicts)
     """
 
-    def __init__(self, graph, iterations=30, alpha=1.0, beta=2.0, rho=0.1, ant_count=10, Q=1.0, verbose=False, viz_dir=None):
+    def __init__(self, graph, iterations=30, alpha=1.0, beta=2.0, rho=0.1, ant_count=10, Q=1.0, verbose=False, viz_dir=None, patience=None):
         """
         Initialize ACO Graph Coloring algorithm.
         
@@ -61,6 +60,7 @@ class ACOGraphColoring:
             Q: Pheromone deposit intensity (default: 1.0)
             verbose: Print progress information (default: False)
             viz_dir: Directory to save visualizations (None = no visualization)
+            patience: Number of iterations without improvement before early stopping (None = no early stopping)
         """
         self.graph = graph
         self.nodes = list(graph.nodes())
@@ -83,6 +83,7 @@ class ACOGraphColoring:
         self.Q = Q
         self.verbose = verbose
         self.viz_dir = viz_dir
+        self.patience = patience
 
         # Create node index mapping
         self.node_index = {node: i for i, node in enumerate(self.nodes)}
@@ -93,6 +94,12 @@ class ACOGraphColoring:
         
         # Build adjacency list for faster neighbor lookup
         self.adjacency = {node: set(self.graph.neighbors(node)) for node in self.nodes}
+        
+        # Initialize visualizer if visualization is enabled (after pheromone is set up)
+        self.visualizer = None
+        if self.viz_dir:
+            from aco_visualization import ACOVisualizer
+            self.visualizer = ACOVisualizer(self)
 
     def _ant_construct_solution(self, start_node):
         """
@@ -297,182 +304,10 @@ class ACOGraphColoring:
             used_colors.add(chosen_color)
             
             # Visualize current step
-            self._plot_partial_solution(solution, nodes_order[:step+1], ant_id, iteration, step, 
+            self.visualizer.plot_partial_solution(solution, nodes_order[:step+1], ant_id, iteration, step, 
                                        save_path=ant_dir / f'step_{step:03d}.png')
         
         return solution
-    
-    def _plot_partial_solution(self, solution, colored_nodes, ant_id, iteration, step, save_path=None):
-        """
-        Plot partial solution showing which nodes are colored so far.
-        
-        Args:
-            solution: Current partial solution
-            colored_nodes: List of nodes colored so far
-            ant_id: Ant identifier
-            iteration: Current iteration
-            step: Current step number
-            save_path: Path to save the figure
-        """
-        fig, ax = plt.subplots(figsize=(10, 10))
-        
-        # Create color map
-        num_colors = len(set(solution.values())) if solution else 1
-        color_map = cm.get_cmap('tab20', max(num_colors, 3))
-        
-        # Separate colored and uncolored nodes
-        colored_node_list = [n for n in self.graph.nodes() if n in solution]
-        uncolored_node_list = [n for n in self.graph.nodes() if n not in solution]
-        current_node = colored_nodes[-1] if colored_nodes else None
-        
-        # Create node colors for colored nodes
-        colored_node_colors = [color_map(solution[node] % 20) for node in colored_node_list]
-        
-        # Draw graph
-        pos = nx.spring_layout(self.graph, seed=42, k=0.5, iterations=50)
-        
-        # Draw edges first
-        nx.draw_networkx_edges(self.graph, pos, alpha=0.3, width=1.5, ax=ax)
-        
-        # Draw uncolored nodes as empty circles (white with black border)
-        if uncolored_node_list:
-            nx.draw_networkx_nodes(self.graph, pos, nodelist=uncolored_node_list,
-                                  node_color='white', node_size=300, 
-                                  edgecolors='black', linewidths=2, ax=ax)
-        
-        # Draw colored nodes (excluding current node)
-        colored_except_current = [n for n in colored_node_list if n != current_node]
-        if colored_except_current:
-            colored_except_current_colors = [color_map(solution[node] % 20) for node in colored_except_current]
-            nx.draw_networkx_nodes(self.graph, pos, nodelist=colored_except_current,
-                                  node_color=colored_except_current_colors, node_size=300, 
-                                  edgecolors='black', linewidths=1.5, ax=ax)
-        
-        # Draw current node being colored with red circle border
-        if current_node is not None:
-            nx.draw_networkx_nodes(self.graph, pos, nodelist=[current_node],
-                                  node_color=[color_map(solution[current_node] % 20)],
-                                  node_size=300, edgecolors='red', linewidths=4, ax=ax)
-        
-        # Draw labels
-        nx.draw_networkx_labels(self.graph, pos, font_size=8, font_weight='bold', ax=ax)
-        
-        ax.set_title(f'Ant {ant_id} - Iteration {iteration} - Step {step+1}/{len(self.nodes)}\n'
-                     f'{len(colored_nodes)} nodes colored, {num_colors} colors used', 
-                     fontsize=13, fontweight='bold')
-        ax.axis('off')
-        
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=150, bbox_inches='tight')
-            plt.close()
-        else:
-            plt.show()
-
-    def plot_pheromone_heatmap(self, iteration, save_path=None):
-        """
-        Plot pheromone trails as a heatmap (nodes × colors) with values.
-        
-        Args:
-            iteration: Current iteration number (for title)
-            save_path: Optional path to save the figure
-        """
-        fig, ax = plt.subplots(figsize=(12, 8))
-        
-        # Create heatmap with light blue gradient colormap
-        im = ax.imshow(self.pheromone, cmap='Blues', aspect='auto', interpolation='nearest',
-                      vmin=self.pheromone.min(), vmax=self.pheromone.max())
-        
-        # Add text annotations with ALL pheromone values
-        pheromone_max = self.pheromone.max()
-        pheromone_min = self.pheromone.min()
-        # Use higher threshold (70%) so more cells have dark text on light background
-        threshold = pheromone_min + (pheromone_max - pheromone_min) * 0.7
-        
-        for i in range(self.N):
-            for j in range(self.max_colors):
-                value = self.pheromone[i, j]
-                # Choose text color based on background brightness
-                text_color = 'white' if value > threshold else 'darkblue'
-                ax.text(j, i, f'{value:.2f}', ha='center', va='center',
-                       color=text_color, fontsize=10 if self.N > 20 else 12, fontweight='bold')
-        
-        # Set labels
-        ax.set_xlabel('Color Index', fontsize=12)
-        ax.set_ylabel('Node Index', fontsize=12)
-        ax.set_title(f'Pheromone Trails - Iteration {iteration}', fontsize=14, fontweight='bold')
-        
-        # Add colorbar
-        cbar = plt.colorbar(im, ax=ax)
-        cbar.set_label('Pheromone Level', fontsize=11)
-        
-        # Set ticks
-        if self.N <= 50:
-            ax.set_yticks(range(0, self.N, max(1, self.N // 10)))
-        if self.max_colors <= 50:
-            ax.set_xticks(range(0, self.max_colors, max(1, self.max_colors // 10)))
-        
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=150, bbox_inches='tight')
-            plt.close()
-        else:
-            plt.show()
-    
-    def plot_ant_solution(self, solution, ant_id, iteration, save_path=None):
-        """
-        Plot the graph with nodes colored according to an ant's solution.
-        
-        Args:
-            solution: Dictionary mapping nodes to colors
-            ant_id: Ant identifier (for title)
-            iteration: Current iteration number (for title)
-            save_path: Optional path to save the figure
-        """
-        fig, ax = plt.subplots(figsize=(10, 10))
-        
-        # Get unique colors and create color map
-        num_colors = len(set(solution.values()))
-        color_map = cm.get_cmap('tab20', num_colors)
-        
-        # Map each node to a matplotlib color
-        node_colors = [color_map(solution[node] % 20) for node in self.graph.nodes()]
-        
-        # Draw graph
-        pos = nx.spring_layout(self.graph, seed=42, k=0.5, iterations=50)
-        nx.draw_networkx_nodes(self.graph, pos, node_color=node_colors, 
-                               node_size=300, alpha=0.9, ax=ax)
-        nx.draw_networkx_edges(self.graph, pos, alpha=0.3, width=1.5, ax=ax)
-        nx.draw_networkx_labels(self.graph, pos, font_size=8, font_weight='bold', ax=ax)
-        
-        # Title with color count
-        ax.set_title(f'Ant {ant_id} Solution - Iteration {iteration}\n{num_colors} colors used', 
-                     fontsize=13, fontweight='bold')
-        ax.axis('off')
-        
-        plt.tight_layout()
-        
-        if save_path:
-            plt.savefig(save_path, dpi=150, bbox_inches='tight')
-            plt.close()
-        else:
-            plt.show()
-    
-    def plot_best_solution(self, iteration, save_path=None):
-        """
-        Plot the current best global solution.
-        
-        Args:
-            iteration: Current iteration number (for title)
-            save_path: Optional path to save the figure
-        """
-        if self.best_global_solution is None:
-            print("No solution available to plot.")
-            return
-        
-        self.plot_ant_solution(self.best_global_solution, "Best", iteration, save_path)
 
     def run(self):
         """
@@ -486,18 +321,17 @@ class ACOGraphColoring:
         self.best_global_solution = None
         best_global_colors = float('inf')
         best_global_conflicts = float('inf')
+        iterations_without_improvement = 0
         
         # Plot initial pheromone state if visualizing
         if self.viz_dir:
-            from pathlib import Path
             initial_dir = Path(self.viz_dir) / 'iteration_000'
             initial_dir.mkdir(parents=True, exist_ok=True)
-            self.plot_pheromone_heatmap(0, save_path=initial_dir / 'pheromone.png')
+            self.visualizer.plot_pheromone_heatmap(0, save_path=initial_dir / 'pheromone.png')
         
         for iteration in range(1, self.iterations + 1):
             # Create iteration directory for visualizations
             if self.viz_dir:
-                from pathlib import Path
                 iter_dir = Path(self.viz_dir) / f'iteration_{iteration:03d}'
                 iter_dir.mkdir(parents=True, exist_ok=True)
             
@@ -525,7 +359,7 @@ class ACOGraphColoring:
                     })
                     # Save final ant solution in ant folder
                     ant_dir = iter_dir / f'ant_{ant_id}'
-                    self.plot_ant_solution(solution, ant_id, iteration, 
+                    self.visualizer.plot_ant_solution(solution, ant_id, iteration, 
                                           save_path=ant_dir / 'final_solution.png')
             else:
                 # Parallel execution without visualization (faster)
@@ -565,6 +399,9 @@ class ACOGraphColoring:
                     self.best_global_solution = deepcopy(iter_best['solution'])
                     best_global_colors = iter_best['num_colors']
                     best_global_conflicts = 0  # Always 0 for valid solutions
+                    iterations_without_improvement = 0  # Reset counter on improvement
+                else:
+                    iterations_without_improvement += 1
             
             # Pheromone update (only on valid solutions)
             self._evaporate_pheromones()
@@ -577,13 +414,22 @@ class ACOGraphColoring:
                       f"iter_best={iter_best['num_colors']} colors ({iter_best['conflicts']} conflicts), "
                       f"global_best={best_global_colors} colors ({best_global_conflicts} conflicts)")
             
+            # Check early stopping condition
+            if self.patience is not None and iterations_without_improvement >= self.patience:
+                if self.verbose:
+                    print(f"\nEarly stopping: No improvement for {self.patience} iterations")
+                return {
+                    'color_count': best_global_colors,
+                    'iterations': iteration
+                }
+            
             # Save iteration visualizations
             if self.viz_dir:
                 # Save pheromone heatmap
-                self.plot_pheromone_heatmap(iteration, save_path=iter_dir / 'pheromone.png')
+                self.visualizer.plot_pheromone_heatmap(iteration, save_path=iter_dir / 'pheromone.png')
                 # Save best global solution so far
                 if self.best_global_solution:
-                    self.plot_best_solution(iteration, save_path=iter_dir / 'best_global.png')
+                    self.visualizer.plot_best_solution(self.best_global_solution, iteration, save_path=iter_dir / 'best_global.png')
             
             # Early stopping if we have found any valid solution
             # (since constructive approach should always produce valid solutions)

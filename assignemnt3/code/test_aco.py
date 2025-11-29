@@ -4,11 +4,16 @@ from aco_gpc import ACOGraphColoring
 from datetime import datetime
 
 # Create a test graph (simple cycle with diagonal)
+# generate complex grpah for testing by graphx, 10 node and 20 edges using random
+print("Creating test graph...")
 graph = nx.Graph()
 graph.add_edges_from([
-    (1, 2), (2, 3), (3, 4), (4, 5), (5, 1),  # 5-cycle
-    (1, 3), (2, 4)  # Some diagonals to make it interesting
+    (0, 1), (1, 2), (2, 3), (3, 4), (4, 5),
+    (5, 6), (6, 7), (7, 8), (8, 9), (9, 0),
+    (0, 5), (1, 6), (2, 7), (3, 8), (4, 9),
+    (0, 2), (1, 3), (4, 6), (5, 7), (8, 0)
 ])
+
 
 print(f"Test graph: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges")
 print()
@@ -26,10 +31,11 @@ print()
 # Create ACO with visualization enabled
 aco = ACOGraphColoring(
     graph, 
-    iterations=5,  # Small number for testing
+    iterations=20,  # Higher number to test early stopping
     ant_count=3,   # Small number for testing
     verbose=True,
-    viz_dir=str(viz_dir)
+    viz_dir=str(viz_dir),
+    patience=3  # Stop if no improvement for 3 iterations
 )
 
 print("Running ACO with step-by-step visualization...")
