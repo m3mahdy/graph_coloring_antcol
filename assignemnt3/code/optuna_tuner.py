@@ -209,7 +209,7 @@ class OptunaACOTuner:
                         name: {**data, **graph_data_for_viz.get(name, {})}
                         for name, data in graph_results.items()
                     }
-                    generate_trial_visualizations(trial.number, graph_results_with_viz, trial_dir)
+                    generate_trial_visualizations(trial.number, graph_results_with_viz, trial_dir, params)
                 
                 # Update study summary after each trial (silent)
                 self.save_study_summary(silent=True)

@@ -1,5 +1,15 @@
 """
-Results visualization and export utilities for ACO hyperparameter tuning.
+Testing Results Export and Visualization for ACO Hyperparameter Tuning.
+
+This module handles TESTING phase operations ONLY:
+- Exports testing results to JSON/CSV files
+- Creates summary visualizations for testing results
+- Saves colored graph visualizations for testing graphs
+- Prints summary statistics and file locations
+
+Note: This is separate from visualization_utils.py which handles:
+- Trial visualizations during optimization
+- Study-level visualizations (history, importances, etc.)
 """
 
 import json
@@ -9,15 +19,20 @@ from pathlib import Path
 from visualization_utils import save_colored_graph_image
 
 
-def visualize_testing_results(testing_results, study_name, data_root):
+def visualize_testing_results(testing_results, study_name, data_root, best_params=None):
     """
     Create and save visualization of testing results in study/testing folder.
-    Also saves colored graph visualizations as PNG files.
+    Generates the same visualization format as trial results:
+    - color_count.png: Bar chart of colors per graph
+    - execution_time.png: Bar chart of execution time per graph
+    - conflicts.png: Bar chart of conflicts per graph
+    - graph_*.png: Colored graph visualizations
     
     Args:
         testing_results: Dictionary containing test results for each graph
         study_name: Name of the study for file naming
         data_root: Path to data root directory
+        best_params: Best parameters from optimization (for execution time plot)
     
     Returns:
         Path: Path to the testing folder
@@ -30,41 +45,89 @@ def visualize_testing_results(testing_results, study_name, data_root):
     graph_names = list(testing_results.keys())
     color_counts = [testing_results[g]['color_count'] for g in graph_names]
     conflict_counts = [testing_results[g]['conflict_count'] for g in graph_names]
+    times = [testing_results[g]['elapsed_time'] for g in graph_names]
 
-    # Create figure with subplots
-    fig, axes = plt.subplots(1, 2, figsize=(15, 5))
-
-    # Plot 1: Color counts per graph
-    axes[0].bar(range(len(graph_names)), color_counts, color='steelblue', alpha=0.7)
-    axes[0].set_xlabel('Graph', fontsize=12)
-    axes[0].set_ylabel('Number of Colors Used', fontsize=12)
-    axes[0].set_title('Color Count per Testing Graph', fontsize=14, fontweight='bold')
-    axes[0].set_xticks(range(len(graph_names)))
-    axes[0].set_xticklabels(graph_names, rotation=45, ha='right')
-    axes[0].grid(axis='y', alpha=0.3)
-
-    # Add value labels on bars
+    # Metric 1: Color counts per graph (separate image)
+    fig, ax = plt.subplots(1, 1, figsize=(8, 5))
+    ax.bar(range(len(graph_names)), color_counts, color='steelblue')
+    ax.set_xlabel('Graph', fontsize=12)
+    ax.set_ylabel('Number of Colors', fontsize=12)
+    ax.set_title('Testing: Color Count per Graph', fontsize=13, fontweight='bold')
+    ax.set_xticks(range(len(graph_names)))
+    ax.set_xticklabels(graph_names, rotation=45, ha='right', fontsize=9)
+    ax.grid(axis='y', alpha=0.3)
+    
+    # Add color count values inside bars
+    max_colors = max(color_counts) if color_counts else 1
+    threshold = max_colors * 0.25
+    
     for i, v in enumerate(color_counts):
-        axes[0].text(i, v + 0.5, str(v), ha='center', va='bottom', fontweight='bold')
-
-    # Plot 2: Conflict counts per graph
-    axes[1].bar(range(len(graph_names)), conflict_counts, color='coral', alpha=0.7)
-    axes[1].set_xlabel('Graph', fontsize=12)
-    axes[1].set_ylabel('Number of Conflicts', fontsize=12)
-    axes[1].set_title('Conflict Count per Testing Graph', fontsize=14, fontweight='bold')
-    axes[1].set_xticks(range(len(graph_names)))
-    axes[1].set_xticklabels(graph_names, rotation=45, ha='right')
-    axes[1].grid(axis='y', alpha=0.3)
-
-    # Add value labels on bars
-    for i, v in enumerate(conflict_counts):
-        axes[1].text(i, v + 0.5, str(v), ha='center', va='bottom', fontweight='bold')
-
+        if v < threshold:
+            ax.text(i, v + max_colors*0.02, str(v), ha='center', va='bottom', fontsize=10, fontweight='bold')
+        else:
+            ax.text(i, v/2, str(v), ha='center', va='center', fontsize=10, fontweight='bold', color='white')
+    
     plt.tight_layout()
+    plt.savefig(testing_path / "color_count.png", dpi=150, bbox_inches='tight')
+    plt.close()
 
-    # Save summary figure in testing folder
-    testing_results_fig_path = testing_path / 'summary.png'
-    plt.savefig(testing_results_fig_path, dpi=300, bbox_inches='tight')
+    # Metric 2: Execution time per graph (separate image)
+    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+    bars = ax.bar(range(len(graph_names)), times, color='coral')
+    ax.set_xlabel('Graph', fontsize=12)
+    ax.set_ylabel('Time (seconds)', fontsize=12)
+    ax.set_title('Testing: Execution Time per Graph', fontsize=13, fontweight='bold')
+    ax.set_xticks(range(len(graph_names)))
+    ax.set_xticklabels(graph_names, rotation=45, ha='right', fontsize=9)
+    ax.grid(axis='y', alpha=0.3)
+    
+    # Add labels with time and iterations only
+    max_time = max(times) if times else 1.0
+    threshold = max_time * 0.25
+    
+    for i, v in enumerate(times):
+        label_parts = [f'{v:.2f}s']
+        if best_params and 'iterations' in best_params:
+            # Show 1.5x iterations used in testing
+            test_iterations = int(best_params['iterations'] * 1.5)
+            label_parts.append(f"iter={test_iterations}")
+        label = '\n'.join(label_parts)
+        
+        # Place label above bar if it's less than 25% of max, else inside
+        if v < threshold:
+            ax.text(i, v + max_time*0.02, label, ha='center', va='bottom', fontsize=8, 
+                    fontweight='bold', color='black')
+        else:
+            ax.text(i, v/2, label, ha='center', va='center', fontsize=8, 
+                    fontweight='bold', color='white', 
+                    bbox=dict(boxstyle='round,pad=0.3', facecolor='black', alpha=0.5))
+    
+    plt.tight_layout()
+    plt.savefig(testing_path / "execution_time.png", dpi=150, bbox_inches='tight')
+    plt.close()
+
+    # Metric 3: Conflict counts per graph (separate image)
+    fig, ax = plt.subplots(1, 1, figsize=(8, 5))
+    ax.bar(range(len(graph_names)), conflict_counts, color='lightcoral')
+    ax.set_xlabel('Graph', fontsize=12)
+    ax.set_ylabel('Conflicts', fontsize=12)
+    ax.set_title('Testing: Conflicts per Graph', fontsize=13, fontweight='bold')
+    ax.set_xticks(range(len(graph_names)))
+    ax.set_xticklabels(graph_names, rotation=45, ha='right', fontsize=9)
+    ax.grid(axis='y', alpha=0.3)
+    
+    # Add conflict count values inside bars
+    max_conflicts = max(conflict_counts) if conflict_counts else 1
+    threshold = max_conflicts * 0.25
+    
+    for i, v in enumerate(conflict_counts):
+        if v < threshold:
+            ax.text(i, v + max_conflicts*0.02, str(v), ha='center', va='bottom', fontsize=10, fontweight='bold')
+        else:
+            ax.text(i, v/2, str(v), ha='center', va='center', fontsize=10, fontweight='bold', color='white')
+    
+    plt.tight_layout()
+    plt.savefig(testing_path / "conflicts.png", dpi=150, bbox_inches='tight')
     plt.close()
     
     # Save colored graph visualizations
@@ -81,6 +144,8 @@ def visualize_testing_results(testing_results, study_name, data_root):
                 save_path=graph_path,
                 node_size=100
             )
+    
+    print(f"    Saved testing visualizations: 3 metric plots, {len(graph_names)} graph plots")
     
     return testing_path
 
