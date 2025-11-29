@@ -231,7 +231,7 @@ def plot_param_importances(study: optuna.Study, figures_path: Path):
 
 
 def plot_slice(study: optuna.Study, figures_path: Path):
-    """Plot slice plot showing parameter effects in 2 rows x 3 columns."""
+    """Plot slice plot showing parameter effects with dynamic layout."""
     filepath = figures_path / "slice.png"
     try:
         # Get parameter names
@@ -240,13 +240,17 @@ def plot_slice(study: optuna.Study, figures_path: Path):
             print("No parameters to plot")
             return
         
-        # Calculate subplot layout (2 rows, 3 columns)
+        # Calculate subplot layout dynamically based on number of parameters
         n_params = len(params)
-        n_cols = 3
-        n_rows = 2
+        if n_params <= 6:
+            n_cols = 3
+            n_rows = 2
+        else:
+            n_cols = 3
+            n_rows = (n_params + n_cols - 1) // n_cols  # Ceiling division
         
         # Create figure with subplots
-        fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 10))
+        fig, axes = plt.subplots(n_rows, n_cols, figsize=(15, 5 * n_rows))
         axes = axes.flatten()  # Flatten to 1D array for easier indexing
         
         # Plot each parameter
