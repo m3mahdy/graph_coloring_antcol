@@ -69,12 +69,10 @@ class ACOGraphColoring:
         # Estimate initial number of colors (upper bound)
         # Use chromatic number lower bound heuristics
         if self.N < 20:
-            self.max_colors = max(3, self.N // 2)
+            self.max_colors = min(5, self.N // 2)
         else:
-            self.max_colors = max(10, self.N // 2)
+            self.max_colors = min(10, self.N // 2)
         
-        self.initial_num_colors = self.max_colors
-
         self.iterations = iterations
         self.alpha = alpha
         self.beta = beta
@@ -83,7 +81,10 @@ class ACOGraphColoring:
         self.Q = Q
         self.verbose = verbose
         self.viz_dir = viz_dir
-        self.patience = patience
+        if patience is None:
+            self.patience = int(iterations * 0.2)  # Default: 20% of total iterations 
+        else:
+            self.patience = patience
 
         # Create node index mapping
         self.node_index = {node: i for i, node in enumerate(self.nodes)}
@@ -188,16 +189,9 @@ class ACOGraphColoring:
         Evaluate a coloring solution.
         
         Returns:
-            Tuple of (num_colors_used, conflict_count)
+            Number of colors used
         """
-        num_colors = len(set(solution.values()))
-        
-        conflicts = 0
-        for u, v in self.graph.edges():
-            if solution[u] == solution[v]:
-                conflicts += 1
-        
-        return num_colors, conflicts
+        return len(set(solution.values()))
 
     def _ant_worker_thread(self, start_node, results_queue):
         """
@@ -208,12 +202,11 @@ class ACOGraphColoring:
             results_queue: Queue to put results
         """
         solution = self._ant_construct_solution(start_node)
-        num_colors, conflicts = self._evaluate_solution(solution)
+        num_colors = self._evaluate_solution(solution)
         
         results_queue.put({
             'solution': solution,
-            'num_colors': num_colors,
-            'conflicts': conflicts
+            'num_colors': num_colors
         })
 
     def _evaporate_pheromones(self):
@@ -315,12 +308,12 @@ class ACOGraphColoring:
         
         Returns:
             Dictionary with:
+                - solution: Best solution found (node -> color mapping)
                 - color_count: Number of colors in best solution
                 - iterations: Number of iterations executed
         """
         self.best_global_solution = None
         best_global_colors = float('inf')
-        best_global_conflicts = float('inf')
         iterations_without_improvement = 0
         
         # Plot initial pheromone state if visualizing
@@ -342,20 +335,30 @@ class ACOGraphColoring:
             
             # Assign starting nodes to ants
             if self.ant_count <= self.N:
+                # If ants <= nodes → assign unique nodes to ants
                 start_nodes = random.sample(self.nodes, self.ant_count)
+
             else:
-                start_nodes = [random.choice(self.nodes) for _ in range(self.ant_count)]
+                # If ants > nodes → ensure full coverage of all nodes
+                start_nodes = []
+
+                # 1) Guarantee that each node is assigned to at least one ant
+                start_nodes.extend(self.nodes)
+
+                # 2) Assign the remaining ants to random nodes (with replacement)
+                remaining_ants = self.ant_count - self.N
+                start_nodes.extend(random.choices(self.nodes, k=remaining_ants))
+
             
             # Run ants with visualization if enabled
             if self.viz_dir:
                 # Sequential execution with visualization for each ant
                 for ant_id, start_node in enumerate(start_nodes, 1):
                     solution = self._ant_construct_solution_with_viz(start_node, ant_id, iteration, iter_dir)
-                    num_colors, conflicts = self._evaluate_solution(solution)
+                    num_colors = self._evaluate_solution(solution)
                     iteration_solutions.append({
                         'solution': solution,
-                        'num_colors': num_colors,
-                        'conflicts': conflicts
+                        'num_colors': num_colors
                     })
                     # Save final ant solution in ant folder
                     ant_dir = iter_dir / f'ant_{ant_id}'
@@ -379,46 +382,34 @@ class ACOGraphColoring:
                 while not results_queue.empty():
                     iteration_solutions.append(results_queue.get())
             
-            # Filter to only conflict-free solutions
-            valid_solutions = [sol for sol in iteration_solutions if sol['conflicts'] == 0]
+            # Find iteration-best solution (minimize colors)
+            iteration_solutions.sort(key=lambda x: x['num_colors'])
+            iter_best = iteration_solutions[0]
             
-            # If no valid solutions found, something went wrong
-            if not valid_solutions:
-                if self.verbose:
-                    print(f"WARNING: Iteration {iteration} produced no valid solutions!")
-                # Use best available (even with conflicts) but don't update global best
-                iteration_solutions.sort(key=lambda x: (x['conflicts'], x['num_colors']))
-                iter_best = iteration_solutions[0]
+            # Update global best if better solution found
+            if iter_best['num_colors'] < best_global_colors:
+                self.best_global_solution = deepcopy(iter_best['solution'])
+                best_global_colors = iter_best['num_colors']
+                iterations_without_improvement = 0  # Reset counter on improvement
             else:
-                # Find iteration-best among valid solutions (minimize colors)
-                valid_solutions.sort(key=lambda x: x['num_colors'])
-                iter_best = valid_solutions[0]
-                
-                # Update global best if better valid solution found
-                if iter_best['num_colors'] < best_global_colors:
-                    self.best_global_solution = deepcopy(iter_best['solution'])
-                    best_global_colors = iter_best['num_colors']
-                    best_global_conflicts = 0  # Always 0 for valid solutions
-                    iterations_without_improvement = 0  # Reset counter on improvement
-                else:
-                    iterations_without_improvement += 1
+                iterations_without_improvement += 1
             
-            # Pheromone update (only on valid solutions)
+            # Pheromone update
             self._evaporate_pheromones()
-            if iter_best['conflicts'] == 0:
-                self._reinforce_pheromones(iter_best['solution'], iter_best['num_colors'])
+            self._reinforce_pheromones(iter_best['solution'], iter_best['num_colors'])
             
             # Verbose output
             if self.verbose:
                 print(f"Iteration {iteration}: "
-                      f"iter_best={iter_best['num_colors']} colors ({iter_best['conflicts']} conflicts), "
-                      f"global_best={best_global_colors} colors ({best_global_conflicts} conflicts)")
+                      f"iter_best={iter_best['num_colors']} colors, "
+                      f"global_best={best_global_colors} colors")
             
             # Check early stopping condition
             if self.patience is not None and iterations_without_improvement >= self.patience:
                 if self.verbose:
                     print(f"\nEarly stopping: No improvement for {self.patience} iterations")
                 return {
+                    'solution': self.best_global_solution,
                     'color_count': best_global_colors,
                     'iterations': iteration
                 }
@@ -430,15 +421,17 @@ class ACOGraphColoring:
                 # Save best global solution so far
                 if self.best_global_solution:
                     self.visualizer.plot_best_solution(self.best_global_solution, iteration, save_path=iter_dir / 'best_global.png')
-            
-            # Early stopping if we have found any valid solution
-            # (since constructive approach should always produce valid solutions)
-            if best_global_conflicts == 0 and self.best_global_solution is not None:
-                # Continue searching for better (fewer colors) solution
-                # No early stop - let all iterations complete to find minimum colors
-                pass
+        
+        # Save final best solution at root of visualization directory
+        if self.viz_dir and self.best_global_solution:
+            self.visualizer.plot_best_solution(
+                self.best_global_solution, 
+                iteration, 
+                save_path=Path(self.viz_dir) / 'final_best_solution.png'
+            )
         
         return {
+            'solution': self.best_global_solution,
             'color_count': best_global_colors,
             'iterations': iteration
         }
