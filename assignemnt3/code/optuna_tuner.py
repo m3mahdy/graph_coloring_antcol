@@ -129,7 +129,6 @@ class OptunaACOTuner:
         param_config: Dict[str, Dict[str, Any]],
         aco_class: type,
         n_trials: int = 100,
-        aco_fixed_params: Optional[Dict] = None,
         timeout: Optional[float] = None,
         n_jobs: int = 1,
         show_progress_bar: bool = True
@@ -142,7 +141,6 @@ class OptunaACOTuner:
             param_config: Parameter search space configuration
             aco_class: ACO class to instantiate
             n_trials: Total number of trials
-            aco_fixed_params: Fixed parameters for ACO
             timeout: Time limit in seconds
             n_jobs: Number of parallel jobs
             show_progress_bar: Show Optuna progress bar
@@ -186,8 +184,7 @@ class OptunaACOTuner:
             return objective_func(
                 trial=trial,
                 params=suggested_params,
-                aco_class=aco_class,
-                fixed_params=aco_fixed_params or {}
+                aco_class=aco_class
             )
         
         # Define callback to save trial results and generate visualizations

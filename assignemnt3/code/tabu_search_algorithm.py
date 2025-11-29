@@ -24,6 +24,15 @@ class TabuSearchGraphColoring:
     The algorithm uses a tabu list to prevent cycling and an aspiration criterion
     to escape local optima. It iteratively reduces the number of colors starting
     from a greedy solution.
+    
+    CRITICAL: This implementation MUST match Assignment 2 notebook implementation
+    (graph_coloring_tabu_search.ipynb) for consistency.
+    Core algorithm logic in _tabu_coloring() matches the notebook's tabu_coloring().
+    
+    Key parameters match Assignment 2:
+    - max_iterations: 3000 in Assignment 2, default 7000 here (configurable)
+    - tabu_size: 3 in Assignment 2, default 10 here (configurable)
+    - tabu_reps: 30 in Assignment 2, default 50 here (configurable)
     """
     
     def __init__(self, graph, max_iterations=7000, tabu_size=10, tabu_reps=50, verbose=False):
@@ -109,6 +118,9 @@ class TabuSearchGraphColoring:
     def _tabu_coloring(self, adjacency_list, number_of_colors, previous_solution, is_first_solution):
         """
         Apply tabu search to find a valid coloring with the specified number of colors.
+        
+        CRITICAL: Core algorithm matches Assignment 2 notebook (tabu_coloring function).
+        The logic for tabu list, aspiration criterion, and conflict resolution is identical.
         
         Args:
             adjacency_list: Graph adjacency list representation

@@ -20,6 +20,10 @@ class GreedyGraphColoring:
     
     The algorithm iterates through vertices and assigns the first available color
     that doesn't conflict with neighboring vertices.
+    
+    CRITICAL: This implementation MUST match Assignment 2 notebook implementation
+    (graph_coloring_tabu_search.ipynb) for consistency.
+    Core algorithm in _greedy_coloring_from_matrix() matches the notebook's greedy_coloring().
     """
     
     def __init__(self, graph, verbose=False):
@@ -55,6 +59,11 @@ class GreedyGraphColoring:
     def _greedy_coloring_from_matrix(self, adj_matrix):
         """
         Apply greedy coloring to adjacency matrix.
+        
+        CRITICAL: Algorithm matches Assignment 2 notebook (greedy_coloring function).
+        Differences from Assignment 2:
+        - Returns tuple (color_dict, color_count) instead of just color_dict
+        - Uses 1-based coloring (colors start from 1, not 0)
         
         Args:
             adj_matrix: Adjacency matrix representing the graph
