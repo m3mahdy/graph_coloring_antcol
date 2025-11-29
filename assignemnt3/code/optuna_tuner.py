@@ -36,7 +36,7 @@ class OptunaACOTuner:
     - Comprehensive visualization of optimization progress
     """
     
-    def __init__(self, study_name: str, data_root: str, direction: str = "minimize"):
+    def __init__(self, study_name: str, data_root: str, direction: str = "minimize", n_startup_trials: int = 10):
         """
         Initialize the Optuna tuner.
         
@@ -44,11 +44,13 @@ class OptunaACOTuner:
             study_name: Name of the study (used for saving/loading)
             data_root: Absolute path to the data directory
             direction: Optimization direction ('minimize' or 'maximize')
+            n_startup_trials: Number of random trials before optimization starts (default: 10)
         """
         self.study_name = study_name
         self.direction = direction
         self.data_root = Path(data_root)
         self.recovery_dir = self.data_root / "studies" / study_name / "recovery"
+        self.n_startup_trials = n_startup_trials
         
         # Setup study-specific folder structure
         self.study_folder = self.data_root / "studies" / study_name
@@ -90,14 +92,19 @@ class OptunaACOTuner:
             self._check_recovery_files()
                 
         except KeyError:
+            # Create sampler with configurable random startup trials before optimization
+            sampler = optuna.samplers.TPESampler(n_startup_trials=self.n_startup_trials, seed=42)
+            
             self.study = optuna.create_study(
                 study_name=self.study_name,
                 storage=self.storage,
                 direction=self.direction,
+                sampler=sampler,
                 load_if_exists=False
             )
             print(f"✓ Created new study '{self.study_name}'")
             print(f"  Storage: {self.journal_file}")
+            print(f"  Random exploration trials: {self.n_startup_trials} (before optimization)")
         
         return self.study
     
