@@ -1,0 +1,123 @@
+{
+  "study_name": "aco_study_tiny_dataset_20251129_220412",
+  "direction": "minimize",
+  "creation_time": "2025-11-29T22:05:04.024837",
+  "n_trials": 5,
+  "best_trial": {
+    "number": 4,
+    "value": 29.0,
+    "parameters": {
+      "iterations": 80,
+      "alpha": 1.8727567547837436,
+      "beta": 1.5503451064389702,
+      "rho": 0.08960126414756578,
+      "ant_count": 41,
+      "Q": 2.8148374243994856
+    },
+    "datetime_start": "2025-11-29T22:04:52.878624",
+    "datetime_complete": "2025-11-29T22:05:03.687700"
+  },
+  "trials": [
+    {
+      "trial_number": 0,
+      "state": "COMPLETE",
+      "value": 32.0,
+      "datetime_start": "2025-11-29T22:04:12.068953",
+      "datetime_complete": "2025-11-29T22:04:25.096041",
+      "duration_seconds": 13.027088,
+      "parameters": {
+        "iterations": 111,
+        "alpha": 1.2999666969197963,
+        "beta": 4.271329668060839,
+        "rho": 0.3165382687625831,
+        "ant_count": 36,
+        "Q": 1.5954603942811234
+      },
+      "user_attrs": {},
+      "system_attrs": {}
+    },
+    {
+      "trial_number": 1,
+      "state": "COMPLETE",
+      "value": 36.0,
+      "datetime_start": "2025-11-29T22:04:25.533673",
+      "datetime_complete": "2025-11-29T22:04:36.301898",
+      "duration_seconds": 10.768225,
+      "parameters": {
+        "iterations": 101,
+        "alpha": 2.413767970162124,
+        "beta": 3.7940054434661525,
+        "rho": 0.494810294921778,
+        "ant_count": 31,
+        "Q": 7.471583564604871
+      },
+      "user_attrs": {},
+      "system_attrs": {}
+    },
+    {
+      "trial_number": 2,
+      "state": "COMPLETE",
+      "value": 35.0,
+      "datetime_start": "2025-11-29T22:04:36.658432",
+      "datetime_complete": "2025-11-29T22:04:39.622526",
+      "duration_seconds": 2.964094,
+      "parameters": {
+        "iterations": 51,
+        "alpha": 2.991243033205322,
+        "beta": 4.64582373203535,
+        "rho": 0.3685723777227524,
+        "ant_count": 18,
+        "Q": 4.92576230510864
+      },
+      "user_attrs": {},
+      "system_attrs": {}
+    },
+    {
+      "trial_number": 3,
+      "state": "COMPLETE",
+      "value": 40.0,
+      "datetime_start": "2025-11-29T22:04:39.903824",
+      "datetime_complete": "2025-11-29T22:04:52.559775",
+      "duration_seconds": 12.655951,
+      "parameters": {
+        "iterations": 90,
+        "alpha": 1.7686424562807066,
+        "beta": 4.145739283564881,
+        "rho": 0.018816307025280872,
+        "ant_count": 48,
+        "Q": 1.557589845760559
+      },
+      "user_attrs": {},
+      "system_attrs": {}
+    },
+    {
+      "trial_number": 4,
+      "state": "COMPLETE",
+      "value": 29.0,
+      "datetime_start": "2025-11-29T22:04:52.878624",
+      "datetime_complete": "2025-11-29T22:05:03.687700",
+      "duration_seconds": 10.809076,
+      "parameters": {
+        "iterations": 80,
+        "alpha": 1.8727567547837436,
+        "beta": 1.5503451064389702,
+        "rho": 0.08960126414756578,
+        "ant_count": 41,
+        "Q": 2.8148374243994856
+      },
+      "user_attrs": {},
+      "system_attrs": {}
+    }
+  ],
+  "study_statistics": {
+    "complete_trials": 5,
+    "failed_trials": 0,
+    "pruned_trials": 0,
+    "running_trials": 0
+  },
+  "storage_info": {
+    "type": "JournalStorage",
+    "journal_file": "/Users/mahdy/projects/meta_graph_coloring_antcol/assignemnt3/data/studies/aco_study_tiny_dataset_20251129_220412/aco_study_tiny_dataset_20251129_220412.log",
+    "note": "Study can be resumed by loading from this journal file"
+  }
+}

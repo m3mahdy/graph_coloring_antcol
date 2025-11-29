@@ -1,0 +1,43 @@
+{
+  "trial_number": 4,
+  "timestamp": "2025-11-29T22:05:03.689130",
+  "parameters": {
+    "iterations": 80,
+    "alpha": 1.8727567547837436,
+    "beta": 1.5503451064389702,
+    "rho": 0.08960126414756578,
+    "ant_count": 41,
+    "Q": 2.8148374243994856
+  },
+  "objective_value": 29.0,
+  "total_color_count": 29.0,
+  "graphs": {
+    "gc_20_9": {
+      "num_colors_used": 16,
+      "initial_num_colors": 11,
+      "graph_size": 22,
+      "color_count": 8,
+      "conflict_count": 7,
+      "iterations_used": 80,
+      "elapsed_time": 1.7572782039642334
+    },
+    "gc_4_1": {
+      "num_colors_used": 10,
+      "initial_num_colors": 10,
+      "graph_size": 5,
+      "color_count": 3,
+      "conflict_count": 0,
+      "iterations_used": 1,
+      "elapsed_time": 0.0049970149993896484
+    },
+    "gc_50_9": {
+      "num_colors_used": 30,
+      "initial_num_colors": 26,
+      "graph_size": 52,
+      "color_count": 18,
+      "conflict_count": 34,
+      "iterations_used": 80,
+      "elapsed_time": 9.04321002960205
+    }
+  }
+}
