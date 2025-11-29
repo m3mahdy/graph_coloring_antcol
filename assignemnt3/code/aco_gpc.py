@@ -39,8 +39,6 @@ class ACOGraphColoring:
         
         Args:
             graph: NetworkX Graph object
-            num_colors: Initial number of colors available (can expand if needed). 
-                       If None, uses graph size / 2 as starting point (default: None)
             iterations: Number of iterations to run (default: 30)
             alpha: Pheromone importance (default: 1.0)
             beta: Heuristic importance (default: 2.0)
@@ -53,8 +51,11 @@ class ACOGraphColoring:
         self.nodes = list(graph.nodes())
         self.N = len(self.nodes)
         
-        # Set default num_colors
-        num_colors = max(10, self.N // 2)  # Start with N/2 colors, minimum 10
+        # Set default num_colors with better heuristic for small graphs
+        if self.N < 20:
+            num_colors = max(3, self.N // 2)  # For small graphs, use minimum 3 colors
+        else:
+            num_colors = max(10, self.N // 2)  # For larger graphs, use minimum 10 colors
         
         self.initial_num_colors = num_colors
         self.num_colors = num_colors

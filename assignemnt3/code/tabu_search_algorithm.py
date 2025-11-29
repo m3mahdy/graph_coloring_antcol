@@ -171,9 +171,9 @@ class TabuSearchGraphColoring:
                 new_solution[vertex] = new_color
                 new_conflicts = 0
                 
-                for v, edges in adjacency_list.items():
+                for vertex_iter, edges in adjacency_list.items():
                     for edge in edges:
-                        if v is not None and edge is not None and new_solution[v] == new_solution[edge]:
+                        if vertex_iter is not None and edge is not None and new_solution[vertex_iter] == new_solution[edge]:
                             new_conflicts += 1
                 
                 if new_conflicts < conflict_count:
