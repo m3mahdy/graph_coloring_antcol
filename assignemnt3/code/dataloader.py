@@ -5,7 +5,7 @@ Loads graph datasets from tuning and testing directories for ACO experiments.
 
 import networkx as nx
 from pathlib import Path
-from typing import Iterator, Tuple
+from typing import Tuple
 
 
 class GraphDataLoader:
@@ -86,52 +86,56 @@ class GraphDataLoader:
         print(f"    Nodes: {num_nodes}, Edges: {num_edges}")
         print(f"    Density: {density:.4f}, Connected: {is_connected}")
     
-    def load_tuning_dataset(self) -> Iterator[Tuple[str, nx.Graph]]:
+    def load_tuning_dataset(self) -> list[Tuple[str, nx.Graph]]:
         """
-        Load all graphs from the tuning dataset and yield as iterator.
+        Load all graphs from the tuning dataset and return as a list.
         Prints summary after loading each graph.
         
-        Yields:
-            Tuple of (filename, NetworkX Graph)
+        Returns:
+            List of tuples (filename, NetworkX Graph)
         """
         print(f"\n{'='*70}")
         print(f"Loading Tuning Dataset: {self.dataset_name}")
         print(f"{'='*70}")
         
         files = self._get_dataset_files("tuning_dataset")
+        graphs = []
         
         for filepath in files:
             try:
                 graph = self._load_graph_from_file(filepath)
                 self._print_graph_info(filepath.name, graph)
-                yield (filepath.name, graph)
+                graphs.append((filepath.name, graph))
             except Exception as e:
                 print(f"  {filepath.name}: Error - {e}")
         
         print(f"{'='*70}\n")
+        return graphs
     
-    def load_testing_dataset(self) -> Iterator[Tuple[str, nx.Graph]]:
+    def load_testing_dataset(self) -> list[Tuple[str, nx.Graph]]:
         """
-        Load all graphs from the testing dataset and yield as iterator.
+        Load all graphs from the testing dataset and return as a list.
         Prints summary after loading each graph.
         
-        Yields:
-            Tuple of (filename, NetworkX Graph)
+        Returns:
+            List of tuples (filename, NetworkX Graph)
         """
         print(f"\n{'='*70}")
         print(f"Loading Testing Dataset: {self.dataset_name}")
         print(f"{'='*70}")
         
         files = self._get_dataset_files("testing_dataset")
+        graphs = []
         
         for filepath in files:
             try:
                 graph = self._load_graph_from_file(filepath)
                 self._print_graph_info(filepath.name, graph)
-                yield (filepath.name, graph)
+                graphs.append((filepath.name, graph))
             except Exception as e:
                 print(f"  {filepath.name}: Error - {e}")
         
         print(f"{'='*70}\n")
+        return graphs
 
 

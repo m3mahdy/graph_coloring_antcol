@@ -3,14 +3,14 @@ Objective function for ACO hyperparameter tuning with Optuna.
 """
 
 
-def aco_objective_function(trial, params, data_loader, aco_class, verbose):
+def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose):
     """
     Objective function for Optuna hyperparameter optimization.
     
     Args:
         trial: Optuna trial object
         params: Dictionary of hyperparameters suggested by Optuna
-        data_loader: GraphDataLoader instance for loading tuning graphs
+        tuning_graphs: List of tuples (graph_name, graph) from tuning dataset
         aco_class: ACOGraphColoring class (not instantiated)
         verbose: Whether to show detailed ACO progress (overridden by params if present)
     
@@ -21,7 +21,7 @@ def aco_objective_function(trial, params, data_loader, aco_class, verbose):
     best_color_count = float('inf')
     
     # Iterate through all graphs in the tuning dataset
-    for graph_name, graph in data_loader.load_tuning_dataset():
+    for graph_name, graph in tuning_graphs:
         # Create ACO instance with all suggested hyperparameters
         aco = aco_class(graph=graph, **params)
         

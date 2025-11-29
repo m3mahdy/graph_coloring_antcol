@@ -12,8 +12,6 @@ import matplotlib.pyplot as plt
 from datetime import datetime
 import pandas as pd
 
-from dataloader import GraphDataLoader
-
 
 class OptunaACOTuner:
     """
@@ -32,7 +30,6 @@ class OptunaACOTuner:
         self,
         study_name: str,
         data_root: str,
-        dataset_name: str,
         direction: str = "minimize"
     ):
         """
@@ -41,34 +38,29 @@ class OptunaACOTuner:
         Args:
             study_name: Name of the study (used for saving/loading)
             data_root: Absolute path to the data directory
-            dataset_name: Name of the dataset ('tiny_dataset' or 'main_dataset')
             direction: Optimization direction ('minimize' or 'maximize')
         """
         self.study_name = study_name
         self.direction = direction
         self.data_root = Path(data_root)
-        self.dataset_name = dataset_name
         
-        # Setup paths
-        self.studies_path = self.data_root / "studies"
-        self.results_path = self.data_root / "results"
-        self.figures_path = self.data_root / "figures"
+        # Setup study-specific folder structure
+        self.study_folder = self.data_root / "studies" / study_name
+        self.results_path = self.study_folder / "results"
+        self.figures_path = self.study_folder / "figures"
         
         # Create directories
-        self.studies_path.mkdir(parents=True, exist_ok=True)
+        self.study_folder.mkdir(parents=True, exist_ok=True)
         self.results_path.mkdir(parents=True, exist_ok=True)
         self.figures_path.mkdir(parents=True, exist_ok=True)
         
-        # Setup JSON storage
-        self.journal_file = self.studies_path / f"{study_name}.log"
+        # Setup JSON storage (in study folder)
+        self.journal_file = self.study_folder / f"{study_name}.log"
         self.storage = JournalStorage(JournalFileStorage(str(self.journal_file)))
         
         self.study: Optional[optuna.Study] = None
         self.best_params: Optional[Dict] = None
         self.best_value: Optional[float] = None
-        
-        # Initialize data loader
-        self.data_loader = GraphDataLoader(str(self.data_root), dataset_name)
     
     def create_or_load_study(self, load_if_exists: bool = True) -> optuna.Study:
         """
@@ -247,7 +239,7 @@ class OptunaACOTuner:
         # Generate visualization plots
         self.generate_plots(recreate=True)
         
-        return self.study
+        return self.best_params
     
     def generate_plots(self, recreate: bool = False):
         """
