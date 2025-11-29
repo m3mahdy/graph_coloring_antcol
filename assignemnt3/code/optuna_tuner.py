@@ -48,6 +48,7 @@ class OptunaACOTuner:
         self.study_name = study_name
         self.direction = direction
         self.data_root = Path(data_root)
+        self.recovery_dir = self.data_root / "studies" / study_name / "recovery"
         
         # Setup study-specific folder structure
         self.study_folder = self.data_root / "studies" / study_name
@@ -72,9 +73,22 @@ class OptunaACOTuner:
         try:
             self.study = optuna.load_study(study_name=self.study_name, storage=self.storage)
             completed = len([t for t in self.study.trials if t.state == optuna.trial.TrialState.COMPLETE])
+            failed = len([t for t in self.study.trials if t.state == optuna.trial.TrialState.FAIL])
+            
             print(f"✓ Loaded existing study '{self.study_name}'")
-            print(f"  Total trials: {len(self.study.trials)} (Completed: {completed})")
+            print(f"  Total trials: {len(self.study.trials)} (Completed: {completed}, Failed: {failed})")
             print(f"  Storage: {self.journal_file}")
+            
+            # Check if last trial failed and offer to retry
+            if self.study.trials and self.study.trials[-1].state == optuna.trial.TrialState.FAIL:
+                last_trial = self.study.trials[-1]
+                print(f"\n⚠ Last trial (#{last_trial.number}) failed!")
+                print(f"  Parameters: {last_trial.params}")
+                print(f"  Note: Optuna will automatically retry with different parameters in the next trial")
+            
+            # Check for partial trial recovery files
+            self._check_recovery_files()
+                
         except KeyError:
             self.study = optuna.create_study(
                 study_name=self.study_name,
@@ -86,6 +100,26 @@ class OptunaACOTuner:
             print(f"  Storage: {self.journal_file}")
         
         return self.study
+    
+    def _check_recovery_files(self):
+        """Check for existing recovery files from interrupted trials."""
+        if not self.recovery_dir.exists():
+            return
+        
+        recovery_files = list(self.recovery_dir.glob("trial_*_recovery.json"))
+        if recovery_files:
+            print(f"\n📋 Found {len(recovery_files)} recovery file(s) from interrupted trials:")
+            for rf in sorted(recovery_files):
+                try:
+                    with open(rf, 'r') as f:
+                        data = json.load(f)
+                        trial_num = data.get('trial_number', 'unknown')
+                        completed = len(data.get('completed_graphs', []))
+                        total_count = data.get('total_color_count', 0)
+                        print(f"  • Trial {trial_num}: {completed} graphs completed, total colors: {total_count}")
+                except Exception as e:
+                    print(f"  • {rf.name}: Error reading ({e})")
+            print(f"  → These trials will resume from where they were interrupted\n")
     
     def _get_remaining_trials(self, total_trials: int) -> int:
         """Calculate remaining trials based on completed trials."""
@@ -184,7 +218,8 @@ class OptunaACOTuner:
             return objective_func(
                 trial=trial,
                 params=suggested_params,
-                aco_class=aco_class
+                aco_class=aco_class,
+                recovery_dir=str(self.recovery_dir)
             )
         
         # Define callback to save trial results and generate visualizations

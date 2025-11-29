@@ -2,12 +2,15 @@
 Objective function for ACO hyperparameter tuning with Optuna.
 """
 import time
+import json
+from pathlib import Path
+from datetime import datetime
 
 # Global storage for graph visualization data (not JSON serializable)
 _trial_graph_viz_data = {}
 
 
-def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose):
+def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose, recovery_dir=None):
     """
     Objective function for Optuna hyperparameter optimization.
     
@@ -17,6 +20,7 @@ def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose):
         tuning_graphs: List of tuples (graph_name, graph) from tuning dataset
         aco_class: ACOGraphColoring class (not instantiated)
         verbose: Whether to show detailed ACO progress (overridden by params if present)
+        recovery_dir: Optional directory path for saving intermediate results
     
     Returns:
         float: Sum of color counts across all tuning graphs (to be minimized)
@@ -27,14 +31,51 @@ def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose):
     # Store graph data separately for visualization (not in trial attrs - not JSON serializable)
     graph_data_for_viz = {}
     
+    # Setup recovery file path if recovery_dir provided
+    recovery_file = None
+    completed_graphs = set()
+    if recovery_dir:
+        recovery_path = Path(recovery_dir)
+        recovery_path.mkdir(parents=True, exist_ok=True)
+        recovery_file = recovery_path / f"trial_{trial.number}_recovery.json"
+        
+        # Check if there's existing partial progress for this trial
+        if recovery_file.exists():
+            try:
+                with open(recovery_file, 'r') as f:
+                    recovery_data = json.load(f)
+                    
+                # Verify parameters match (ensure we're resuming the same trial)
+                if recovery_data.get('params') == params:
+                    graph_results = recovery_data.get('graph_results', {})
+                    total_color_count = recovery_data.get('total_color_count', 0)
+                    completed_graphs = set(graph_results.keys())
+                    
+                    print(f"\n{'='*70}")
+                    print(f"🔄 Resuming Trial {trial.number} from previous interruption")
+                    print(f"✓ Already completed {len(completed_graphs)}/{len(tuning_graphs)} graphs")
+                    print(f"✓ Current total color count: {total_color_count}")
+                    print(f"{'='*70}")
+                else:
+                    print(f"\n⚠ Recovery file found but parameters don't match - starting fresh")
+                    completed_graphs = set()
+            except Exception as e:
+                print(f"\n⚠ Error loading recovery file: {e} - starting fresh")
+                completed_graphs = set()
+    
     # Print trial header
-    print(f"\n{'='*70}")
-    print(f"Trial {trial.number}: Testing hyperparameters")
-    print(f"{'='*70}")
-    print(f"{'-'*70}")
+    if not completed_graphs:  # Only print if starting fresh
+        print(f"\n{'='*70}")
+        print(f"Trial {trial.number}: Testing hyperparameters")
+        print(f"{'='*70}")
+        print(f"{'-'*70}")
     
     # Iterate through all graphs in the tuning dataset
     for idx, (graph_name, graph) in enumerate(tuning_graphs, 1):
+        # Skip already completed graphs
+        if graph_name in completed_graphs:
+            print(f"\nGraph {idx}/{len(tuning_graphs)}: {graph_name} - ⏭ Skipped (already completed)")
+            continue
         print(f"\nGraph {idx}/{len(tuning_graphs)}: {graph_name} (nodes={len(graph.nodes())}, edges={len(graph.edges())})")
         
         # Create ACO instance with all suggested hyperparameters
@@ -67,6 +108,22 @@ def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose):
         # Enhanced output
         print(f"  ✓ Result: {result['color_count']} colors used in {result['iterations']} iterations")
         print(f"  ✓ Time: {elapsed_time:.2f}s")
+        
+        # Save intermediate results after each graph (for recovery)
+        if recovery_file:
+            recovery_data = {
+                'trial_number': trial.number,
+                'params': params,
+                'graph_results': graph_results,
+                'total_color_count': total_color_count,
+                'completed_graphs': list(graph_results.keys()),
+                'timestamp': datetime.now().isoformat()
+            }
+            try:
+                with open(recovery_file, 'w') as f:
+                    json.dump(recovery_data, f, indent=2)
+            except Exception as e:
+                print(f"  ⚠ Warning: Could not save recovery data: {e}")
     
     print(f"\n{'-'*70}")
     print(f"Trial {trial.number} Summary:")
@@ -79,5 +136,13 @@ def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose):
     
     # Store graph data in global dict for callback access
     _trial_graph_viz_data[trial.number] = graph_data_for_viz
+    
+    # Clean up recovery file on successful completion
+    if recovery_file and recovery_file.exists():
+        try:
+            recovery_file.unlink()
+            print(f"✓ Recovery file cleaned up")
+        except Exception as e:
+            print(f"⚠ Warning: Could not delete recovery file: {e}")
     
     return total_color_count

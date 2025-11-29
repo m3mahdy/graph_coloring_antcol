@@ -213,6 +213,14 @@ def calculate_statistics(df_results, best_known=None):
             stats_list.append(stat_entry)
     
     df_stats = pd.DataFrame(stats_list)
+    
+    # Reorder columns to put best_known as second column (after graph)
+    if 'best_known' in df_stats.columns:
+        cols = ['graph', 'best_known', 'algorithm', 'best_colors', 'avg_colors', 'std_colors', 
+                'avg_conflicts', 'avg_time', 'std_time', 'deviation_best', 'deviation_avg']
+        # Only include columns that exist
+        df_stats = df_stats[[col for col in cols if col in df_stats.columns]]
+    
     return df_stats
 
 

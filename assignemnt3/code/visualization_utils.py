@@ -122,7 +122,7 @@ def generate_trial_visualizations(trial_number: int, graph_results: Dict, trial_
                 solution=graph_data['solution'],
                 graph_name=graph_name,
                 color_count=graph_data['color_count'],
-                conflict_count=graph_data['conflict_count'],
+                conflict_count=graph_data.get('conflict_count', 0),  # Default to 0 since constructive approach has no conflicts
                 save_path=graph_path,
                 node_size=50
             )
