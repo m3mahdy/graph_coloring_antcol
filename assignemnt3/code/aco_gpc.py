@@ -46,7 +46,7 @@ class ACOGraphColoring:
     5. Track global best (minimum colors, zero conflicts)
     """
 
-    def __init__(self, graph, iterations=30, alpha=1.0, beta=2.0, rho=0.1, ant_count=10, Q=1.0, verbose=False, viz_dir=None, patience=None):
+    def __init__(self, graph, iterations=30, alpha=1.0, beta=2.0, rho=0.1, ant_count=10, Q=1.0, verbose=False, viz_dir=None, patience=0.5):
         """
         Initialize ACO Graph Coloring algorithm.
         
@@ -69,9 +69,9 @@ class ACOGraphColoring:
         # Estimate initial number of colors (upper bound)
         # Use chromatic number lower bound heuristics
         if self.N < 20:
-            self.max_colors = min(5, self.N // 2)
+            self.max_colors = min(100, self.N // 2)
         else:
-            self.max_colors = min(10, self.N // 2)
+            self.max_colors = min(1000, self.N // 2)
         
         self.iterations = iterations
         self.alpha = alpha
@@ -82,9 +82,9 @@ class ACOGraphColoring:
         self.verbose = verbose
         self.viz_dir = viz_dir
         if patience is None:
-            self.patience = int(iterations * 0.2)  # Default: 20% of total iterations 
+            self.patience = iterations  # No early stopping
         else:
-            self.patience = patience
+            self.patience = int(iterations *  patience)
 
         # Create node index mapping
         self.node_index = {node: i for i, node in enumerate(self.nodes)}
@@ -92,6 +92,7 @@ class ACOGraphColoring:
         # Initialize pheromone matrix: pheromone[node][color]
         # Start with uniform pheromone levels
         self.pheromone = np.ones((self.N, self.max_colors), dtype=float)
+        self.min_pheromone = 1.0  # Track minimum pheromone value for matrix expansion
         
         # Build adjacency list for faster neighbor lookup
         self.adjacency = {node: set(self.graph.neighbors(node)) for node in self.nodes}
@@ -145,16 +146,17 @@ class ACOGraphColoring:
                 if color not in neighbor_colors:  # Valid color (no conflict)
                     valid_colors.append(color)
             
-            # If no valid colors found, this should not happen with sufficient max_colors
+            # If no valid colors found, expand pheromone matrix
             if not valid_colors:
-                # Fallback: add a new color (expand if needed)
-                valid_colors = [self.max_colors]
+                # Need to add a new color - expand matrix first
+                self._expand_pheromone_matrix(self.max_colors + 1)
+                valid_colors = [self.max_colors - 1]  # Use the newly added color
             
             # Calculate scores ONLY for valid colors
             scores = []
             for color in valid_colors:
                 # Pheromone component
-                tau = self.pheromone[node_idx][color] if color < self.max_colors else 1.0
+                tau = self.pheromone[node_idx][color]
                 tau = tau ** self.alpha
                 
                 # Heuristic component: prefer already used colors
@@ -173,6 +175,8 @@ class ACOGraphColoring:
                 probabilities = scores / score_sum
             else:
                 # Fallback: uniform distribution over valid colors
+                # Why ? Because all scores are zero, likely due to very low pheromone levels.
+                # if so, this will cause division by zero. So we assign equal probabilities.
                 probabilities = np.ones(len(valid_colors)) / len(valid_colors)
             
             # Select color probabilistically from VALID colors only
@@ -209,11 +213,32 @@ class ACOGraphColoring:
             'num_colors': num_colors
         })
 
+    def _expand_pheromone_matrix(self, new_max_colors):
+        """
+        Expand pheromone matrix to accommodate more colors.
+        New columns are initialized with tracked minimum pheromone value.
+        
+        Args:
+            new_max_colors: New maximum number of colors
+        """
+        if new_max_colors <= self.max_colors:
+            return
+        
+        # Create new columns initialized with tracked minimum pheromone value
+        additional_colors = new_max_colors - self.max_colors
+        new_columns = np.full((self.N, additional_colors), self.min_pheromone, dtype=float)
+        
+        # Append new columns to existing pheromone matrix
+        self.pheromone = np.hstack([self.pheromone, new_columns])
+        self.max_colors = new_max_colors
+    
     def _evaporate_pheromones(self):
         """
         Evaporate pheromones globally by factor (1 - rho).
+        Updates minimum pheromone value for new color initialization.
         """
         self.pheromone *= (1.0 - self.rho)
+        self.min_pheromone *= (1.0 - self.rho)
 
     def _reinforce_pheromones(self, solution, num_colors):
         """
@@ -229,9 +254,7 @@ class ACOGraphColoring:
         
         for node, color in solution.items():
             node_idx = self.node_index[node]
-            # Only reinforce if color is within pheromone matrix bounds
-            if color < self.max_colors:
-                self.pheromone[node_idx][color] += deposit
+            self.pheromone[node_idx][color] += deposit
 
     def _ant_construct_solution_with_viz(self, start_node, ant_id, iteration, save_dir):
         """
@@ -277,12 +300,14 @@ class ACOGraphColoring:
                     valid_colors.append(color)
             
             if not valid_colors:
-                valid_colors = [self.max_colors]
+                # Need to add a new color - expand matrix first
+                self._expand_pheromone_matrix(self.max_colors + 1)
+                valid_colors = [self.max_colors - 1]  # Use the newly added color
             
             # Calculate scores and select color
             scores = []
             for color in valid_colors:
-                tau = self.pheromone[node_idx][color] if color < self.max_colors else 1.0
+                tau = self.pheromone[node_idx][color]
                 tau = tau ** self.alpha
                 eta = 2.0 if color in used_colors else 1.0
                 eta = eta ** self.beta
