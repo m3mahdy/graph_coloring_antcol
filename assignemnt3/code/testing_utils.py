@@ -19,6 +19,121 @@ from pathlib import Path
 from visualization_utils import save_colored_graph_image
 
 
+def generate_algorithm_plots(results_df, algorithm_name, output_dir, best_params=None):
+    """
+    Generate 3 metric plots for a single algorithm's testing results.
+    Saves plots in algorithm-specific folder: output_dir/algorithm_name/
+    
+    Args:
+        results_df: DataFrame with columns [graph, colors, conflicts, time]
+        algorithm_name: Name of algorithm (greedy, tabu, aco)
+        output_dir: Base output directory path
+        best_params: Optional best parameters (for ACO iteration display)
+        
+    Returns:
+        Path: Path to algorithm's results folder
+    """
+    # Create algorithm folder
+    algo_path = Path(output_dir) / algorithm_name
+    algo_path.mkdir(parents=True, exist_ok=True)
+    
+    graph_names = results_df['graph'].tolist()
+    color_counts = results_df['colors'].tolist()
+    conflict_counts = results_df['conflicts'].tolist()
+    times = results_df['time'].tolist()
+    
+    # Plot 1: Color counts per graph
+    fig, ax = plt.subplots(1, 1, figsize=(8, 5))
+    ax.bar(range(len(graph_names)), color_counts, color='steelblue')
+    ax.set_xlabel('Graph', fontsize=12)
+    ax.set_ylabel('Number of Colors', fontsize=12)
+    ax.set_title(f'{algorithm_name.upper()}: Color Count per Graph', fontsize=13, fontweight='bold')
+    ax.set_xticks(range(len(graph_names)))
+    ax.set_xticklabels(graph_names, rotation=45, ha='right', fontsize=9)
+    ax.grid(axis='y', alpha=0.3)
+    
+    max_colors = max(color_counts) if color_counts else 1
+    threshold = max_colors * 0.25
+    
+    for i, v in enumerate(color_counts):
+        if v < threshold:
+            ax.text(i, v + max_colors*0.02, str(v), ha='center', va='bottom', fontsize=10, fontweight='bold')
+        else:
+            ax.text(i, v/2, str(v), ha='center', va='center', fontsize=10, fontweight='bold', color='white')
+    
+    plt.tight_layout()
+    color_count_file = algo_path / "color_count.png"
+    if color_count_file.exists():
+        color_count_file.unlink()
+    plt.savefig(color_count_file, dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    # Plot 2: Execution time per graph
+    fig, ax = plt.subplots(1, 1, figsize=(10, 6))
+    ax.bar(range(len(graph_names)), times, color='coral')
+    ax.set_xlabel('Graph', fontsize=12)
+    ax.set_ylabel('Time (seconds)', fontsize=12)
+    ax.set_title(f'{algorithm_name.upper()}: Execution Time per Graph', fontsize=13, fontweight='bold')
+    ax.set_xticks(range(len(graph_names)))
+    ax.set_xticklabels(graph_names, rotation=45, ha='right', fontsize=9)
+    ax.grid(axis='y', alpha=0.3)
+    
+    max_time = max(times) if times else 1.0
+    threshold = max_time * 0.25
+    
+    for i, v in enumerate(times):
+        label_parts = [f'{v:.2f}s']
+        if best_params and 'iterations' in best_params and algorithm_name == 'aco':
+            test_iterations = int(best_params['iterations'] * 1.5)
+            label_parts.append(f"iter={test_iterations}")
+        label = '\n'.join(label_parts)
+        
+        if v < threshold:
+            ax.text(i, v + max_time*0.02, label, ha='center', va='bottom', fontsize=8, 
+                    fontweight='bold', color='black')
+        else:
+            ax.text(i, v/2, label, ha='center', va='center', fontsize=8, 
+                    fontweight='bold', color='white', 
+                    bbox=dict(boxstyle='round,pad=0.3', facecolor='black', alpha=0.5))
+    
+    plt.tight_layout()
+    exec_time_file = algo_path / "execution_time.png"
+    if exec_time_file.exists():
+        exec_time_file.unlink()
+    plt.savefig(exec_time_file, dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    # Plot 3: Conflict counts per graph
+    fig, ax = plt.subplots(1, 1, figsize=(8, 5))
+    ax.bar(range(len(graph_names)), conflict_counts, color='lightcoral')
+    ax.set_xlabel('Graph', fontsize=12)
+    ax.set_ylabel('Conflicts', fontsize=12)
+    ax.set_title(f'{algorithm_name.upper()}: Conflicts per Graph', fontsize=13, fontweight='bold')
+    ax.set_xticks(range(len(graph_names)))
+    ax.set_xticklabels(graph_names, rotation=45, ha='right', fontsize=9)
+    ax.grid(axis='y', alpha=0.3)
+    
+    max_conflicts = max(conflict_counts) if conflict_counts else 1
+    threshold = max_conflicts * 0.25
+    
+    for i, v in enumerate(conflict_counts):
+        if v < threshold:
+            ax.text(i, v + max_conflicts*0.02, str(v), ha='center', va='bottom', fontsize=10, fontweight='bold')
+        else:
+            ax.text(i, v/2, str(v), ha='center', va='center', fontsize=10, fontweight='bold', color='white')
+    
+    plt.tight_layout()
+    conflicts_file = algo_path / "conflicts.png"
+    if conflicts_file.exists():
+        conflicts_file.unlink()
+    plt.savefig(conflicts_file, dpi=150, bbox_inches='tight')
+    plt.close()
+    
+    print(f"  ✓ Generated {algorithm_name} plots: 3 metrics (color count, execution time, conflicts)")
+    
+    return algo_path
+
+
 def visualize_testing_results(testing_results, study_name, data_root, best_params=None):
     """
     Create and save visualization of testing results in study/testing folder.

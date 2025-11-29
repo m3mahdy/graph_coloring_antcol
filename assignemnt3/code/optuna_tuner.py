@@ -244,8 +244,13 @@ class OptunaACOTuner:
         
         return self.best_params
     
-    def generate_plots(self, recreate: bool = False):
-        """Generate all study-level visualization plots."""
+    def generate_plots(self, recreate: bool = True):
+        """
+        Generate all study-level visualization plots.
+        
+        Args:
+            recreate: If True, always regenerate plots (default: True for consistency)
+        """
         if self.study is None:
             raise ValueError("No study available. Run optimization first.")
         
@@ -259,10 +264,8 @@ class OptunaACOTuner:
         ]
         
         for filepath, plot_func in plots:
-            if recreate or not filepath.exists():
-                plot_func()
-            else:
-                print(f"{filepath.stem} already exists: {filepath.name}")
+            # Always regenerate to ensure latest data
+            plot_func()
         
         print("All plots generated successfully.\n")
     

@@ -3,9 +3,10 @@ Data Loader for ACO Graph Coloring
 Loads graph datasets from tuning and testing directories for ACO experiments.
 """
 
+import json
 import networkx as nx
 from pathlib import Path
-from typing import Tuple
+from typing import Tuple, Dict
 
 
 class GraphDataLoader:
@@ -137,5 +138,53 @@ class GraphDataLoader:
         
         print(f"{'='*70}\n")
         return graphs
+    
+    def load_best_known_results(self) -> Dict[str, int]:
+        """
+        Load best known results from testing_best_known.json in dataset root.
+        This file contains benchmark results for each graph.
+        
+        Returns:
+            Dictionary mapping graph names to best known color counts
+            
+        Raises:
+            FileNotFoundError: If testing_best_known.json file does not exist
+            ValueError: If JSON format is invalid
+        """
+        best_known_path = self.data_root / self.dataset_name / "testing_best_known.json"
+        
+        if not best_known_path.exists():
+            raise FileNotFoundError(
+                f"Best known results file not found: {best_known_path}\n"
+                f"Expected location: data/{self.dataset_name}/testing_best_known.json"
+            )
+        
+        try:
+            with open(best_known_path, 'r') as f:
+                best_known_list = json.load(f)
+            
+            if not isinstance(best_known_list, list):
+                raise ValueError("testing_best_known.json must contain a list of graph entries")
+            
+            best_known_dict = {}
+            for entry in best_known_list:
+                if not isinstance(entry, dict):
+                    raise ValueError(f"Invalid entry in testing_best_known.json: {entry}")
+                if 'graph_name' not in entry or 'best_known_colors' not in entry:
+                    raise ValueError(f"Missing required fields in entry: {entry}")
+                
+                best_known_dict[entry['graph_name']] = entry['best_known_colors']
+            
+            print(f"\n{'='*70}")
+            print(f"Loaded Best Known Results: {len(best_known_dict)} graphs")
+            print(f"{'='*70}")
+            for graph_name, colors in sorted(best_known_dict.items()):
+                print(f"  {graph_name}: {colors} colors")
+            print(f"{'='*70}\n")
+            
+            return best_known_dict
+            
+        except json.JSONDecodeError as e:
+            raise ValueError(f"Invalid JSON format in testing_best_known.json: {e}")
 
 

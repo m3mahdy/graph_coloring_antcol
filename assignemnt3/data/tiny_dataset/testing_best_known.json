@@ -1,0 +1,10 @@
+[
+    {
+        "graph_name": "gc_4_1",
+        "best_known_colors": 5
+    },
+    {
+        "graph_name": "gc_20_9",
+        "best_known_colors": 7
+    }
+]

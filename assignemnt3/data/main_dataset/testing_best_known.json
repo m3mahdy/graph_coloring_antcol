@@ -1,0 +1,14 @@
+[
+    {
+        "graph_name": "dsjc250.5",
+        "best_known_colors": 28
+    },
+    {
+        "graph_name": "dsjc500.9",
+        "best_known_colors": 126
+    },
+    {
+        "graph_name": "dsjc1000.5",
+        "best_known_colors": 85
+    }
+]
