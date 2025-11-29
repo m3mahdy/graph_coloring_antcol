@@ -38,18 +38,67 @@ class GraphDataLoader:
     
     def _load_graph_from_file(self, filepath: Path) -> nx.Graph:
         """
-        Load a graph from a file using NetworkX edge list reader.
+        Load a graph from a file.
+        
+        File format:
+            Line 1: n_nodes n_edges (header - skipped)
+            Lines 2+: node1 node2 (edge list)
         
         Args:
             filepath: Path to the graph file
             
         Returns:
-            NetworkX Graph object
+            NetworkX Graph object with integer node labels
         """
         if not filepath.exists():
             raise FileNotFoundError(f"Graph file not found: {filepath}")
         
-        graph = nx.read_edgelist(str(filepath))
+        # Read file and skip first line (header with node/edge counts)
+        with open(filepath, 'r') as f:
+            lines = f.readlines()
+        
+        # Parse header to validate
+        header = lines[0].strip().split()
+        if len(header) != 2:
+            raise ValueError(f"Invalid header format in {filepath}: expected 'n_nodes n_edges'")
+        
+        expected_nodes = int(header[0])
+        expected_edges = int(header[1])
+        
+        # Create graph from edge list (skip header)
+        graph = nx.Graph()
+        
+        # Parse edges and add to graph
+        for i, line in enumerate(lines[1:], start=2):
+            line = line.strip()
+            if not line:  # Skip empty lines
+                continue
+            
+            parts = line.split()
+            if len(parts) != 2:
+                raise ValueError(f"Invalid edge format in {filepath} line {i}: '{line}'")
+            
+            # Convert node labels to integers
+            node1 = int(parts[0])
+            node2 = int(parts[1])
+            graph.add_edge(node1, node2)
+        
+        # Validate loaded graph matches header
+        actual_nodes = graph.number_of_nodes()
+        actual_edges = graph.number_of_edges()
+        
+        if actual_nodes != expected_nodes:
+            raise ValueError(
+                f"Graph {filepath.name}: node count mismatch. "
+                f"Header: {expected_nodes}, Actual: {actual_nodes}"
+            )
+        
+        if actual_edges != expected_edges:
+            raise ValueError(
+                f"Graph {filepath.name}: edge count mismatch. "
+                f"Header: {expected_edges}, Actual: {actual_edges}"
+            )
+        
         return graph
     
     def _get_dataset_files(self, data_split: str) -> list:

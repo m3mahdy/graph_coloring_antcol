@@ -215,7 +215,7 @@ def calculate_statistics(df_results, best_known=None):
 
 def generate_comparison_plots(df_results, df_stats, output_dir, best_known=None):
     """
-    Generate comparison plots for the test results.
+    Generate 4 comparison plots for the test results.
     
     Args:
         df_results: DataFrame with raw results
@@ -282,7 +282,7 @@ def generate_comparison_plots(df_results, df_stats, output_dir, best_known=None)
         best_colors_file.unlink()
     fig.savefig(best_colors_file, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"  ✓ Figure 1/5 created: Best Color Count Comparison")
+    print(f"  ✓ Figure 1/4 created: Best Color Count Comparison")
     
     # Plot 2: Average Color Count with Std Dev (with BKS as bars)
     # Bars touching each other
@@ -325,7 +325,7 @@ def generate_comparison_plots(df_results, df_stats, output_dir, best_known=None)
         avg_colors_file.unlink()
     fig.savefig(avg_colors_file, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"  ✓ Figure 2/5 created: Average Color Count Comparison")
+    print(f"  ✓ Figure 2/4 created: Average Color Count Comparison")
     
     # Plot 3: Average Execution Time (NO BEST KNOWN - doesn't apply)
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -352,7 +352,7 @@ def generate_comparison_plots(df_results, df_stats, output_dir, best_known=None)
         exec_time_file.unlink()
     fig.savefig(exec_time_file, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"  ✓ Figure 3/5 created: Execution Time Comparison")
+    print(f"  ✓ Figure 3/4 created: Execution Time Comparison")
     
     # Plot 4: Average Conflict Count (NO BEST KNOWN - doesn't apply)
     fig, ax = plt.subplots(figsize=(10, 6))
@@ -377,54 +377,7 @@ def generate_comparison_plots(df_results, df_stats, output_dir, best_known=None)
         conflicts_file.unlink()
     fig.savefig(conflicts_file, dpi=300, bbox_inches='tight')
     plt.close()
-    print(f"  ✓ Figure 4/5 created: Conflict Count Comparison")
-    
-    # Plot 5: Deviation from Best Known Solution (enhanced)
-    if has_best_known and 'deviation_best' in df_stats.columns:
-        fig, ax = plt.subplots(figsize=(12, 6))
-        
-        # Collect data
-        deviation_data = {}
-        for algo in algorithms:
-            df_algo = df_stats[df_stats['algorithm'] == algo]
-            deviations = []
-            for g in graphs:
-                df_g = df_algo[df_algo['graph'] == g]
-                if len(df_g) > 0 and not pd.isna(df_g['deviation_best'].values[0]):
-                    deviations.append(df_g['deviation_best'].values[0])
-                else:
-                    deviations.append(np.nan)
-            deviation_data[algo] = deviations
-        
-        # Plot bars for each algorithm
-        for i, algo in enumerate(algorithms):
-            values = deviation_data[algo]
-            # Only plot non-NaN values
-            x_pos = [j + i * algo_width for j in range(len(values))]
-            y_pos = [v if not np.isnan(v) else 0 for v in values]
-            
-            ax.bar(x_pos, y_pos, algo_width, label=algo, 
-                   color=ALGO_COLORS.get(algo, '#888888'), alpha=0.85)
-        
-        # Add zero line (BKS reference)
-        ax.axhline(y=0, color='gold', linestyle='--', linewidth=2, 
-                   label='Best Known Solution (0%)', zorder=5)
-        
-        ax.set_xlabel('Graph', fontweight='bold', fontsize=12)
-        ax.set_ylabel('Deviation from Best Known Solution (%)', fontweight='bold', fontsize=12)
-        ax.set_title('Deviation from Best Known Solution', fontsize=14, fontweight='bold')
-        ax.set_xticks(x + algo_width * (n_algos - 1) / 2)
-        ax.set_xticklabels(graphs, rotation=45, ha='right')
-        ax.legend(fontsize=10, loc='upper right', framealpha=0.9)
-        ax.grid(axis='y', alpha=0.3)
-        plt.tight_layout()
-        
-        deviation_file = output_path / 'comparison_deviation_from_bks.png'
-        if deviation_file.exists():
-            deviation_file.unlink()
-        fig.savefig(deviation_file, dpi=300, bbox_inches='tight')
-        plt.close()
-        print(f"  ✓ Figure 5/5 created: Deviation from Best Known Solutions")
+    print(f"  ✓ Figure 4/4 created: Conflict Count Comparison")
 
 
 
