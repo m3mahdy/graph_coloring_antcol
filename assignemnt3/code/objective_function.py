@@ -1,6 +1,10 @@
 """
 Objective function for ACO hyperparameter tuning with Optuna.
 """
+import time
+
+# Global storage for graph visualization data (not JSON serializable)
+_trial_graph_viz_data = {}
 
 
 def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose):
@@ -15,33 +19,69 @@ def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose):
         verbose: Whether to show detailed ACO progress (overridden by params if present)
     
     Returns:
-        float: Best (minimum) color count across all tuning graphs (to be minimized)
+        float: Sum of color counts across all tuning graphs (to be minimized)
     """
     graph_results = {}
-    best_color_count = float('inf')
+    total_color_count = 0
+    
+    # Store graph data separately for visualization (not in trial attrs - not JSON serializable)
+    graph_data_for_viz = {}
+    
+    # Print trial header
+    print(f"\n{'='*70}")
+    print(f"Trial {trial.number}: Testing hyperparameters")
+    print(f"{'='*70}")
+    print(f"{'-'*70}")
     
     # Iterate through all graphs in the tuning dataset
-    for graph_name, graph in tuning_graphs:
+    for idx, (graph_name, graph) in enumerate(tuning_graphs, 1):
+        print(f"\nGraph {idx}/{len(tuning_graphs)}: {graph_name} (nodes={len(graph.nodes())}, edges={len(graph.edges())})")
+        
         # Create ACO instance with all suggested hyperparameters
         aco = aco_class(graph=graph, **params)
         
-        # Run ACO optimization (uses parameters set during initialization)
+        # Track execution time for this graph
+        start_time = time.time()
         result = aco.run()
+        elapsed_time = time.time() - start_time
         
-        # Store results for this graph
+        # Store JSON-serializable results for trial attributes
         graph_results[graph_name] = {
+            'num_colors_used': aco.num_colors,
+            'initial_num_colors': aco.initial_num_colors,
+            'graph_size': len(graph.nodes()),
             'color_count': result['color_count'],
             'conflict_count': result['conflict_count'],
-            'iterations_used': result['iterations']
+            'iterations_used': result['iterations'],
+            'elapsed_time': elapsed_time
         }
         
-        # Track the best color count
-        if result['color_count'] < best_color_count:
-            best_color_count = result['color_count']
+        # Store graph and solution separately for visualization (not JSON serializable)
+        graph_data_for_viz[graph_name] = {
+            'graph': graph,
+            'solution': result['best_solution'],
+            'color_count': result['color_count'],
+            'conflict_count': result['conflict_count']
+        }
         
-        print(f"  [{graph_name}] Colors: {result['color_count']}, Conflicts: {result['conflict_count']}")
+        # Accumulate total color count for objective
+        total_color_count += result['color_count']
+        
+        # Enhanced output
+        print(f"  ✓ Result: {result['color_count']} colors used, {result['conflict_count']} conflicts")
+        print(f"  ✓ Available colors: {aco.num_colors} (started with {aco.initial_num_colors})")
+        print(f"  ✓ Time: {elapsed_time:.2f}s")
     
-    # Store graph results in trial user attributes
+    print(f"\n{'-'*70}")
+    print(f"Trial {trial.number} Summary:")
+    print(f"  Total colors across all graphs: {total_color_count}")
+    print(f"  Average colors per graph: {total_color_count / len(tuning_graphs):.2f}")
+    print(f"{'='*70}\n")
+    
+    # Store only JSON-serializable data in trial user attributes
     trial.set_user_attr('graph_results', graph_results)
     
-    return best_color_count
+    # Store graph data in global dict for callback access
+    _trial_graph_viz_data[trial.number] = graph_data_for_viz
+    
+    return total_color_count

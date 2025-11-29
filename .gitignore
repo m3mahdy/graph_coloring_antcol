@@ -27,3 +27,5 @@ _build/
 __pycache__/
 
 venv/
+# studeis data inside assignemnt3
+assignemnt3/data/studies/

@@ -6,11 +6,13 @@ import json
 import pandas as pd
 import matplotlib.pyplot as plt
 from pathlib import Path
+from visualization_utils import save_colored_graph_image
 
 
 def visualize_testing_results(testing_results, study_name, data_root):
     """
-    Create and save visualization of testing results.
+    Create and save visualization of testing results in study/testing folder.
+    Also saves colored graph visualizations as PNG files.
     
     Args:
         testing_results: Dictionary containing test results for each graph
@@ -18,8 +20,12 @@ def visualize_testing_results(testing_results, study_name, data_root):
         data_root: Path to data root directory
     
     Returns:
-        Path: Path to the saved figure
+        Path: Path to the testing folder
     """
+    # Create testing folder inside study folder
+    testing_path = Path(data_root) / 'studies' / study_name / 'testing'
+    testing_path.mkdir(parents=True, exist_ok=True)
+    
     # Extract data for visualization
     graph_names = list(testing_results.keys())
     color_counts = [testing_results[g]['color_count'] for g in graph_names]
@@ -56,19 +62,32 @@ def visualize_testing_results(testing_results, study_name, data_root):
 
     plt.tight_layout()
 
-    # Save figure
-    figures_path = Path(data_root) / 'figures'
-    figures_path.mkdir(parents=True, exist_ok=True)
-    testing_results_fig_path = figures_path / f'{study_name}_testing_results.png'
+    # Save summary figure in testing folder
+    testing_results_fig_path = testing_path / 'summary.png'
     plt.savefig(testing_results_fig_path, dpi=300, bbox_inches='tight')
     plt.close()
     
-    return testing_results_fig_path
+    # Save colored graph visualizations
+    for graph_name in graph_names:
+        graph_data = testing_results[graph_name]
+        if 'graph' in graph_data and 'best_solution' in graph_data:
+            graph_path = testing_path / f"graph_{graph_name}.png"
+            save_colored_graph_image(
+                graph=graph_data['graph'],
+                solution=graph_data['best_solution'],
+                graph_name=graph_name,
+                color_count=graph_data['color_count'],
+                conflict_count=graph_data['conflict_count'],
+                save_path=graph_path,
+                node_size=100
+            )
+    
+    return testing_path
 
 
 def export_results(testing_results, best_params, study_name, data_root):
     """
-    Export testing results and best parameters to JSON and CSV files.
+    Export testing results and best parameters to JSON and CSV files in testing folder.
     
     Args:
         testing_results: Dictionary containing test results for each graph
@@ -80,13 +99,21 @@ def export_results(testing_results, best_params, study_name, data_root):
         dict: Dictionary containing paths to all exported files
     """
     data_root = Path(data_root)
-    results_dir = data_root / 'results'
-    results_dir.mkdir(parents=True, exist_ok=True)
+    testing_dir = data_root / 'studies' / study_name / 'testing'
+    testing_dir.mkdir(parents=True, exist_ok=True)
+    
+    # Clean testing results (remove non-JSON serializable data)
+    clean_results = {}
+    for graph_name, result in testing_results.items():
+        clean_results[graph_name] = {
+            k: v for k, v in result.items() 
+            if k not in ['graph', 'best_solution']
+        }
     
     # Save testing results to JSON
-    testing_results_path = results_dir / f'{study_name}_testing_results.json'
+    testing_results_path = testing_dir / 'results.json'
     with open(testing_results_path, 'w') as f:
-        json.dump(testing_results, f, indent=2)
+        json.dump(clean_results, f, indent=2)
     
     # Create summary DataFrame
     summary_data = []
@@ -101,12 +128,12 @@ def export_results(testing_results, best_params, study_name, data_root):
     summary_df = pd.DataFrame(summary_data)
     
     # Save summary to CSV
-    summary_csv_path = results_dir / f'{study_name}_testing_summary.csv'
+    summary_csv_path = testing_dir / 'summary.csv'
     summary_df.to_csv(summary_csv_path, index=False)
     
     # Save best parameters to CSV
     best_params_df = pd.DataFrame([best_params])
-    best_params_csv_path = results_dir / f'{study_name}_best_params.csv'
+    best_params_csv_path = testing_dir / 'best_params.csv'
     best_params_df.to_csv(best_params_csv_path, index=False)
     
     return {
@@ -138,7 +165,7 @@ def print_summary_statistics(summary_df):
     print("=" * 70)
 
 
-def print_file_locations(study_name, data_root, exported_files, figure_path):
+def print_file_locations(study_name, data_root, exported_files, testing_path):
     """
     Print a summary of all file locations.
     
@@ -146,25 +173,37 @@ def print_file_locations(study_name, data_root, exported_files, figure_path):
         study_name: Name of the study
         data_root: Path to data root directory
         exported_files: Dictionary containing paths to exported files
-        figure_path: Path to the testing results figure
+        testing_path: Path to the testing folder
     """
     data_root = Path(data_root)
+    study_folder = data_root / 'studies' / study_name
     
     print("\n" + "=" * 70)
     print("FILE LOCATIONS")
     print("=" * 70)
+    print(f"\nStudy Folder: {study_folder}")
     print("\nStudy Files:")
-    print(f"  Study Log: {data_root / 'studies' / f'{study_name}.log'}")
-    print(f"  Best Params JSON: {data_root / 'studies' / f'{study_name}_best_params.json'}")
+    print(f"  Study Log: {study_folder / f'{study_name}.log'}")
+    print(f"  Study Summary: {study_folder / f'{study_name}_summary.json'}")
 
-    print("\nResults:")
-    print(f"  Testing Results JSON: {exported_files['testing_results_json']}")
-    print(f"  Testing Summary CSV: {exported_files['testing_summary_csv']}")
+    print("\nTesting Results (testing/):")
+    print(f"  Results JSON: {exported_files['testing_results_json']}")
+    print(f"  Summary CSV: {exported_files['testing_summary_csv']}")
     print(f"  Best Params CSV: {exported_files['best_params_csv']}")
+    print(f"  Summary Figure: {testing_path / 'summary.png'}")
+    print(f"  Colored Graphs: {testing_path / 'graph_*.png'}")
 
-    print("\nFigures:")
-    print(f"  Optimization History: {data_root / 'figures' / f'{study_name}_optimization_history.png'}")
-    print(f"  Parameter Importances: {data_root / 'figures' / f'{study_name}_param_importances.png'}")
-    print(f"  Parallel Coordinates: {data_root / 'figures' / f'{study_name}_parallel_coordinate.png'}")
-    print(f"  Testing Results: {figure_path}")
+    print("\nStudy Figures (figures/):")
+    print(f"  Optimization History: {study_folder / 'figures' / 'history.png'}")
+    print(f"  Parameter Importances: {study_folder / 'figures' / 'importances.png'}")
+    print(f"  Parallel Coordinates: {study_folder / 'figures' / 'parallel.png'}")
+    print(f"  Contour Plot: {study_folder / 'figures' / 'contour.png'}")
+    print(f"  Slice Plot: {study_folder / 'figures' / 'slice.png'}")
+    
+    print(f"\nTrial Figures (results/trial_XXXX/):")
+    print(f"  Trial Data: {study_folder / 'results' / 'trial_0000' / 'trial_results.json'}")
+    print(f"  Color Count: {study_folder / 'results' / 'trial_0000' / 'color_count.png'}")
+    print(f"  Execution Time: {study_folder / 'results' / 'trial_0000' / 'execution_time.png'}")
+    print(f"  Conflicts: {study_folder / 'results' / 'trial_0000' / 'conflicts.png'}")
+    print(f"  Colored Graphs: {study_folder / 'results' / 'trial_0000' / 'graph_*.png'}")
     print("=" * 70)

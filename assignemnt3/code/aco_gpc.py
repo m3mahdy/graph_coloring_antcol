@@ -33,13 +33,14 @@ class ACOGraphColoring:
       - Automatically expands available colors if stagnated with conflicts.
     """
 
-    def __init__(self, graph, num_colors, iterations=30, alpha=1.0, beta=2.0, rho=0.1, ant_count=10, Q=1.0, verbose=False):
+    def __init__(self, graph, iterations=30, alpha=1.0, beta=2.0, rho=0.1, ant_count=10, Q=1.0, verbose=False):
         """
         Initialize ACO Graph Coloring algorithm.
         
         Args:
             graph: NetworkX Graph object
-            num_colors: Initial number of colors available (can expand if needed)
+            num_colors: Initial number of colors available (can expand if needed). 
+                       If None, uses graph size / 2 as starting point (default: None)
             iterations: Number of iterations to run (default: 30)
             alpha: Pheromone importance (default: 1.0)
             beta: Heuristic importance (default: 2.0)
@@ -51,6 +52,10 @@ class ACOGraphColoring:
         self.graph = graph
         self.nodes = list(graph.nodes())
         self.N = len(self.nodes)
+        
+        # Set default num_colors
+        num_colors = max(10, self.N // 2)  # Start with N/2 colors, minimum 10
+        
         self.initial_num_colors = num_colors
         self.num_colors = num_colors
 
