@@ -245,7 +245,8 @@ def visualize_testing_results(testing_results, study_name, data_root, best_param
     plt.savefig(testing_path / "conflicts.png", dpi=150, bbox_inches='tight')
     plt.close()
     
-    # Save colored graph visualizations
+    # Save colored graph visualizations (skip if solution not available - ACO case)
+    graph_plots_saved = 0
     for graph_name in graph_names:
         graph_data = testing_results[graph_name]
         if 'graph' in graph_data and 'best_solution' in graph_data:
@@ -259,8 +260,9 @@ def visualize_testing_results(testing_results, study_name, data_root, best_param
                 save_path=graph_path,
                 node_size=100
             )
+            graph_plots_saved += 1
     
-    print(f"    Saved testing visualizations: 3 metric plots, {len(graph_names)} graph plots")
+    print(f"    Saved testing visualizations: 3 metric plots, {graph_plots_saved} graph plots")
     
     return testing_path
 

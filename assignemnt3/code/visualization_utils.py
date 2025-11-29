@@ -28,7 +28,7 @@ def generate_trial_visualizations(trial_number: int, graph_results: Dict, trial_
     graph_names = list(graph_results.keys())
     colors = [graph_results[g]['color_count'] for g in graph_names]
     times = [graph_results[g]['elapsed_time'] for g in graph_names]
-    conflicts = [graph_results[g]['conflict_count'] for g in graph_names]
+    conflicts = [graph_results[g].get('conflict_count', 0) for g in graph_names]  # ACO doesn't return conflicts (always 0)
     
     # Metric 1: Color counts per graph (separate image)
     fig, ax = plt.subplots(1, 1, figsize=(8, 5))

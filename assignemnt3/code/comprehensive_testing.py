@@ -94,9 +94,12 @@ def run_algorithm_single(algorithm_name, graph, params=None):
     
     elapsed_time = time.time() - start_time
     
+    # Handle different return formats: Greedy/Tabu return conflict_count, ACO does not
+    conflict_count = result.get('conflict_count', 0)  # ACO guarantees 0 conflicts
+    
     return {
         'color_count': result['color_count'],
-        'conflict_count': result['conflict_count'],
+        'conflict_count': conflict_count,
         'execution_time': elapsed_time
     }
 

@@ -47,29 +47,25 @@ def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose):
         
         # Store JSON-serializable results for trial attributes
         graph_results[graph_name] = {
-            'num_colors_used': aco.num_colors,
             'initial_num_colors': aco.initial_num_colors,
             'graph_size': len(graph.nodes()),
             'color_count': result['color_count'],
-            'conflict_count': result['conflict_count'],
             'iterations_used': result['iterations'],
             'elapsed_time': elapsed_time
         }
         
-        # Store graph and solution separately for visualization (not JSON serializable)
+        # Store graph separately for visualization (not JSON serializable)
+        # Note: ACO does not return solution dict, only color count
         graph_data_for_viz[graph_name] = {
             'graph': graph,
-            'solution': result['best_solution'],
-            'color_count': result['color_count'],
-            'conflict_count': result['conflict_count']
+            'color_count': result['color_count']
         }
         
         # Accumulate total color count for objective
         total_color_count += result['color_count']
         
         # Enhanced output
-        print(f"  ✓ Result: {result['color_count']} colors used, {result['conflict_count']} conflicts")
-        print(f"  ✓ Available colors: {aco.num_colors} (started with {aco.initial_num_colors})")
+        print(f"  ✓ Result: {result['color_count']} colors used in {result['iterations']} iterations")
         print(f"  ✓ Time: {elapsed_time:.2f}s")
     
     print(f"\n{'-'*70}")
