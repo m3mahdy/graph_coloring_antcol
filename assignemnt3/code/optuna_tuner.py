@@ -129,15 +129,27 @@ class OptunaACOTuner:
             print(f"  → These trials will resume from where they were interrupted\n")
     
     def _get_remaining_trials(self, total_trials: int) -> int:
-        """Calculate remaining trials based on completed trials."""
+        """
+        Calculate remaining trials to reach the target number of SUCCESSFUL completions.
+        Failed trials don't count toward the total.
+        """
         if self.study is None:
             return total_trials
         
         completed = len([t for t in self.study.trials if t.state == optuna.trial.TrialState.COMPLETE])
         remaining = max(0, total_trials - completed)
         
-        print(f"Completed trials: {completed}/{total_trials}")
-        print(f"Remaining trials: {remaining}")
+        # Show all trial states for transparency
+        failed = len([t for t in self.study.trials if t.state == optuna.trial.TrialState.FAIL])
+        total_executed = len(self.study.trials)
+        
+        print(f"Trial Summary:")
+        print(f"  Successful: {completed}/{total_trials}")
+        if failed > 0:
+            print(f"  Failed: {failed} (not counted toward total)")
+        print(f"  Total executed: {total_executed}")
+        print(f"  Remaining needed: {remaining}")
+
         
         return remaining
     

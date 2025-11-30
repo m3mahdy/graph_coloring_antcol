@@ -88,7 +88,10 @@ def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose, rec
         if graph_name in completed_graphs:
             print(f"\nGraph {idx}/{len(tuning_graphs)}: {graph_name} - ⏭ Skipped (already completed)")
             continue
-        print(f"\nGraph {idx}/{len(tuning_graphs)}: {graph_name} (nodes={len(graph.nodes())}, edges={len(graph.edges())})")
+        # Get tabu best value for this graph
+        tabu_best = tabu_best_values.get(graph_name)
+        tabu_info = f", tabu_best={tabu_best}" if tabu_best else ""
+        print(f"\nGraph {idx}/{len(tuning_graphs)}: {graph_name} (nodes={len(graph.nodes())}, edges={len(graph.edges())}{tabu_info})")
         
         # Create ACO instance with all suggested hyperparameters
         aco = aco_class(graph=graph, **params)
