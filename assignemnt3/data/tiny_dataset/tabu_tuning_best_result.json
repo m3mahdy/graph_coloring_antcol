@@ -4,11 +4,11 @@
         "best_known_colors": 2
     },
     {
-        "graph_name": "gc_250_9",
-        "best_known_colors": 85
-    },
-    {
         "graph_name": "gc_50_9",
         "best_known_colors": 21
+    },
+       {
+        "graph_name": "gc_20_9",
+        "best_known_colors": 10
     }
 ]

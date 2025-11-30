@@ -46,7 +46,7 @@ class ACOGraphColoring:
     5. Track global best (minimum colors, zero conflicts)
     """
 
-    def __init__(self, graph, iterations=30, alpha=1.0, beta=2.0, rho=0.1, ant_count=10, Q=1.0, verbose=False, viz_dir=None, patience=0.5):
+    def __init__(self, graph, iterations=30, alpha=1.0, beta=2.0, rho=0.1, ant_count=10, Q=1.0, verbose=False, viz_dir=None, patience=0.5, trial_number=None, graph_name=None, graph_index=None, tabu_best=None):
         """
         Initialize ACO Graph Coloring algorithm.
         
@@ -61,6 +61,7 @@ class ACOGraphColoring:
             verbose: Print progress information (default: False)
             viz_dir: Directory to save visualizations (None = no visualization)
             patience: Number of iterations without improvement before early stopping (None = no early stopping)
+            tabu_best: Best known color count from tabu search (for comparison)
         """
         self.graph = graph
         self.nodes = list(graph.nodes())
@@ -81,6 +82,11 @@ class ACOGraphColoring:
         self.Q = Q
         self.verbose = verbose
         self.viz_dir = viz_dir
+        self.trial_number = trial_number
+        self.graph_name = graph_name
+        self.graph_index = graph_index
+        self.tabu_best = tabu_best
+        
         if patience is None:
             self.patience = iterations  # No early stopping
         else:
@@ -423,16 +429,39 @@ class ACOGraphColoring:
             self._evaporate_pheromones()
             self._reinforce_pheromones(iter_best['solution'], iter_best['num_colors'])
             
-            # Verbose output - update same line
-            print(f"\rIteration {iteration}/{self.iterations}: "
-                    f"iter_best={iter_best['num_colors']} colors, "
-                    f"global_best={best_global_colors} colors", end='', flush=True)
+            # Build progress message with available context
+            progress_parts = []
+            if self.trial_number is not None:
+                progress_parts.append(f"Trial {self.trial_number}")
+            if self.graph_name is not None:
+                progress_parts.append(f"Graph '{self.graph_name}'")
+            if self.graph_index is not None:
+                progress_parts.append(f"[{self.graph_index}]")
+            
+            prefix = " | ".join(progress_parts) + " | " if progress_parts else ""
+            
+            # Build tabu comparison
+            tabu_info = ""
+            if self.tabu_best is not None:
+                diff = best_global_colors - self.tabu_best
+                if diff == 0:
+                    tabu_info = f" - 🎯 Match Tabu: {self.tabu_best}"
+                elif diff > 0:
+                    tabu_info = f" - ⚠️ vs Tabu: {self.tabu_best} (+{diff})"
+                else:
+                    tabu_info = f" - 🏆 Better than Tabu: {self.tabu_best} ({diff})"
+            
+            # Verbose output - print each iteration on new line
+            if iteration % 100 == 0:
+                print(f"💬 {prefix}Iteration {iteration}/{self.iterations}: "
+                        f"iter_best={iter_best['num_colors']}, "
+                        f"global_best={best_global_colors}{tabu_info}")
             
             # Check early stopping condition
             if self.patience is not None and iterations_without_improvement >= self.patience:
                 print()  # New line after progress updates
                 # make it dangerous
-                print(f"\n ❌ Early stopping: No improvement for {self.patience} iterations")
+                print(f"❌ {prefix} Early stopping: No improvement for {self.patience} iterations")
                 return {
                     'solution': self.best_global_solution,
                     'color_count': best_global_colors,

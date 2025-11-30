@@ -84,17 +84,27 @@ def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose, rec
     
     # Iterate through all graphs in the tuning dataset
     for idx, (graph_name, graph) in enumerate(tuning_graphs, 1):
+        # Build prefix for all prints in this graph iteration
+        prefix = f"Trial {trial.number} | Graph '{graph_name}' | [{idx}/{len(tuning_graphs)}] |"
+        
         # Skip already completed graphs
         if graph_name in completed_graphs:
-            print(f"\nGraph {idx}/{len(tuning_graphs)}: {graph_name} - ⏭ Skipped (already completed)")
+            print(f"\n{prefix} ⏭ Skipped (already completed)")
             continue
         # Get tabu best value for this graph
         tabu_best = tabu_best_values.get(graph_name)
         tabu_info = f", tabu_best={tabu_best}" if tabu_best else ""
-        print(f"\nGraph {idx}/{len(tuning_graphs)}: {graph_name} (nodes={len(graph.nodes())}, edges={len(graph.edges())}{tabu_info})")
+        print(f"\n💡 {prefix} Starting (nodes={len(graph.nodes())}, edges={len(graph.edges())}{tabu_info})")
         
-        # Create ACO instance with all suggested hyperparameters
-        aco = aco_class(graph=graph, **params)
+        # Create ACO instance with all suggested hyperparameters and logging context
+        aco = aco_class(
+            graph=graph,
+            trial_number=trial.number,
+            graph_name=graph_name,
+            graph_index=f"{idx}/{len(tuning_graphs)}",
+            tabu_best=tabu_best,
+            **params
+        )
         
         # Track execution time for this graph
         start_time = time.time()
@@ -122,16 +132,17 @@ def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose, rec
         
         # Enhanced output
         tabu_best = tabu_best_values.get(graph_name)
-        print(f"  ✓ Result: {result['color_count']} colors in {result['iterations']} iterations")
+        tabu_comparison = ""
         if tabu_best:
             diff = result['color_count'] - tabu_best
             if diff == 0:
-                print(f"  🎯 Perfect Match! ACO: {result['color_count']} = Tabu Best: {tabu_best}")
+                tabu_comparison = f" - 🎯 Perfect Match! (Tabu Best: {tabu_best})"
             elif diff > 0:
-                print(f"  ⚠️ ACO: {result['color_count']} vs Tabu Best: {tabu_best} (+{diff} colors)")
+                tabu_comparison = f" - ⚠️ Less than Tabu Best: {tabu_best} (+{diff})"
             else:
-                print(f"  🏆 Better! ACO: {result['color_count']} vs Tabu Best: {tabu_best} ({diff} colors)")
-        print(f"  ⏱  Time: {elapsed_time:.2f}s")
+                tabu_comparison = f" - 🏆 Better than Tabu Best: {tabu_best} ({diff})"
+        
+        print(f"🔹 {prefix} ✓ Result: {result['color_count']} colors in {result['iterations']} iterations{tabu_comparison} | ⏱ {elapsed_time:.2f}s")
         
         # Save intermediate results after each graph (for recovery)
         if recovery_file:
@@ -147,7 +158,7 @@ def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose, rec
                 with open(recovery_file, 'w') as f:
                     json.dump(recovery_data, f, indent=2)
             except Exception as e:
-                print(f"  ⚠ Warning: Could not save recovery data: {e}")
+                print(f"{prefix} ⚠ Warning: Could not save recovery data: {e}")
     
     print(f"\n{'-'*70}")
     print(f"Trial {trial.number} Summary:")
