@@ -226,7 +226,8 @@ class OptunaACOTuner:
                 trial=trial,
                 params=suggested_params,
                 aco_class=aco_class,
-                recovery_dir=str(self.recovery_dir)
+                recovery_dir=str(self.recovery_dir),
+                n_startup_trials=self.n_startup_trials
             )
         
         # Define callback to save trial results and generate visualizations

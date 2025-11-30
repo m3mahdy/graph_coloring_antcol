@@ -423,16 +423,15 @@ class ACOGraphColoring:
             self._evaporate_pheromones()
             self._reinforce_pheromones(iter_best['solution'], iter_best['num_colors'])
             
-            # Verbose output
-            if self.verbose:
-                print(f"Iteration {iteration}: "
-                      f"iter_best={iter_best['num_colors']} colors, "
-                      f"global_best={best_global_colors} colors")
+            # Verbose output - update same line
+            print(f"\rIteration {iteration}/{self.iterations}: "
+                    f"iter_best={iter_best['num_colors']} colors, "
+                    f"global_best={best_global_colors} colors", end='', flush=True)
             
             # Check early stopping condition
             if self.patience is not None and iterations_without_improvement >= self.patience:
-                if self.verbose:
-                    print(f"\nEarly stopping: No improvement for {self.patience} iterations")
+                print()  # New line after progress updates
+                print(f"\nEarly stopping: No improvement for {self.patience} iterations")
                 return {
                     'solution': self.best_global_solution,
                     'color_count': best_global_colors,
@@ -446,6 +445,10 @@ class ACOGraphColoring:
                 # Save best global solution so far
                 if self.best_global_solution:
                     self.visualizer.plot_best_solution(self.best_global_solution, iteration, save_path=iter_dir / 'best_global.png')
+        
+        # Print newline after progress updates
+        if self.verbose:
+            print()
         
         # Save final best solution at root of visualization directory
         if self.viz_dir and self.best_global_solution:

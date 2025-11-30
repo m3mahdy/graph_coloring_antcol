@@ -10,7 +10,7 @@ from datetime import datetime
 _trial_graph_viz_data = {}
 
 
-def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose, recovery_dir=None):
+def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose, recovery_dir=None, n_startup_trials=10):
     """
     Objective function for Optuna hyperparameter optimization.
     
@@ -21,6 +21,7 @@ def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose, rec
         aco_class: ACOGraphColoring class (not instantiated)
         verbose: Whether to show detailed ACO progress (overridden by params if present)
         recovery_dir: Optional directory path for saving intermediate results
+        n_startup_trials: Number of random exploration trials before optimization
     
     Returns:
         float: Sum of color counts across all tuning graphs (to be minimized)
@@ -66,8 +67,14 @@ def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose, rec
     # Print trial header
     if not completed_graphs:  # Only print if starting fresh
         print(f"\n{'='*70}")
-        print(f"Trial {trial.number}: Testing hyperparameters")
+        if trial.number < n_startup_trials:
+            print(f"Trial {trial.number}: Random Exploration (Startup {trial.number + 1}/{n_startup_trials})")
+        else:
+            print(f"Trial {trial.number}: TPE Optimization")
         print(f"{'='*70}")
+        print("Parameters:")
+        for param_name, param_value in params.items():
+            print(f"  {param_name}: {param_value}")
         print(f"{'-'*70}")
     
     # Iterate through all graphs in the tuning dataset
