@@ -179,8 +179,12 @@ def save_colored_graph_image(graph, solution, graph_name, color_count, conflict_
                               node_size=node_size, ax=ax, alpha=0.9)
         nx.draw_networkx_edges(graph, pos, alpha=0.3, width=0.5, ax=ax)
         
-        # Set title and styling
-        ax.set_title(f"{graph_name}\\nColors: {color_count}, Conflicts: {conflict_count}",
+        # Get graph statistics
+        num_nodes = len(graph.nodes())
+        num_edges = len(graph.edges())
+        
+        # Set title with graph statistics and styling
+        ax.set_title(f"{graph_name}\n Nodes: {num_nodes}, Edges: {num_edges}\n Colors: {color_count}",
                     fontsize=11, fontweight='bold', pad=10)
         ax.axis('off')
         ax.margins(0.1)
