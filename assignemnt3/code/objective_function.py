@@ -10,7 +10,7 @@ from datetime import datetime
 _trial_graph_viz_data = {}
 
 
-def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose, recovery_dir=None, n_startup_trials=10):
+def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose, recovery_dir=None, n_startup_trials=10, tabu_best_values=None):
     """
     Objective function for Optuna hyperparameter optimization.
     
@@ -22,12 +22,17 @@ def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose, rec
         verbose: Whether to show detailed ACO progress (overridden by params if present)
         recovery_dir: Optional directory path for saving intermediate results
         n_startup_trials: Number of random exploration trials before optimization
+        tabu_best_values: Dictionary mapping graph names to tabu search best color counts
     
     Returns:
         float: Sum of color counts across all tuning graphs (to be minimized)
     """
     graph_results = {}
     total_color_count = 0
+    
+    # Use provided tabu best values or default to empty dict
+    if tabu_best_values is None:
+        tabu_best_values = {}
     
     # Store graph data separately for visualization (not in trial attrs - not JSON serializable)
     graph_data_for_viz = {}
@@ -113,8 +118,17 @@ def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose, rec
         total_color_count += result['color_count']
         
         # Enhanced output
-        print(f"  ✓ Result: {result['color_count']} colors used in {result['iterations']} iterations")
-        print(f"  ✓ Time: {elapsed_time:.2f}s")
+        tabu_best = tabu_best_values.get(graph_name)
+        print(f"  ✓ Result: {result['color_count']} colors in {result['iterations']} iterations")
+        if tabu_best:
+            diff = result['color_count'] - tabu_best
+            if diff == 0:
+                print(f"  🎯 Perfect Match! ACO: {result['color_count']} = Tabu Best: {tabu_best}")
+            elif diff > 0:
+                print(f"  📊 ACO: {result['color_count']} vs Tabu Best: {tabu_best} (+{diff} colors)")
+            else:
+                print(f"  🏆 Better! ACO: {result['color_count']} vs Tabu Best: {tabu_best} ({diff} colors)")
+        print(f"  ⏱  Time: {elapsed_time:.2f}s")
         
         # Save intermediate results after each graph (for recovery)
         if recovery_file:

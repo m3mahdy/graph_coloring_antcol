@@ -431,7 +431,7 @@ class ACOGraphColoring:
             # Check early stopping condition
             if self.patience is not None and iterations_without_improvement >= self.patience:
                 print()  # New line after progress updates
-                print(f"\nEarly stopping: No improvement for {self.patience} iterations")
+                print(f"\n⚠️ Early stopping: No improvement for {self.patience} iterations")
                 return {
                     'solution': self.best_global_solution,
                     'color_count': best_global_colors,

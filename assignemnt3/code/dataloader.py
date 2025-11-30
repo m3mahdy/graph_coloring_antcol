@@ -136,13 +136,15 @@ class GraphDataLoader:
         print(f"    Nodes: {num_nodes}, Edges: {num_edges}")
         print(f"    Density: {density:.4f}, Connected: {is_connected}")
     
-    def load_tuning_dataset(self) -> list[Tuple[str, nx.Graph]]:
+    def load_tuning_dataset(self) -> Tuple[list[Tuple[str, nx.Graph]], Dict[str, int]]:
         """
-        Load all graphs from the tuning dataset and return as a list.
+        Load all graphs from the tuning dataset and their best known results.
         Prints summary after loading each graph.
         
         Returns:
-            List of tuples (filename, NetworkX Graph)
+            Tuple of:
+                - List of tuples (filename, NetworkX Graph)
+                - Dictionary mapping graph names to best known color counts
         """
         print(f"\n{'='*70}")
         print(f"Loading Tuning Dataset: {self.dataset_name}")
@@ -160,7 +162,11 @@ class GraphDataLoader:
                 print(f"  {filepath.name}: Error - {e}")
         
         print(f"{'='*70}\n")
-        return graphs
+        
+        # Load tabu search best values from tuning
+        tabu_best_values = self._load_tabu_tuning_best_results()
+        
+        return graphs, tabu_best_values
     
     def load_testing_dataset(self) -> list[Tuple[str, nx.Graph]]:
         """
@@ -187,6 +193,48 @@ class GraphDataLoader:
         
         print(f"{'='*70}\n")
         return graphs
+    
+    def _load_tabu_tuning_best_results(self) -> Dict[str, int]:
+        """
+        Load best results from tabu search tuning (tabu_tuning_best_result.json).
+        This file contains the best results achieved during tabu search parameter tuning.
+        
+        Returns:
+            Dictionary mapping graph names to best known color counts from tabu search tuning.
+            Returns empty dict if file doesn't exist.
+        """
+        tabu_best_path = self.data_root / self.dataset_name / "tabu_tuning_best_result.json"
+        
+        if not tabu_best_path.exists():
+            print(f"ℹ No tabu tuning best results file found at: {tabu_best_path}")
+            return {}
+        
+        try:
+            with open(tabu_best_path, 'r') as f:
+                tabu_best_list = json.load(f)
+            
+            if not isinstance(tabu_best_list, list):
+                print(f"⚠ Warning: Invalid format in tabu_tuning_best_result.json")
+                return {}
+            
+            tabu_best_dict = {}
+            for entry in tabu_best_list:
+                if isinstance(entry, dict) and 'graph_name' in entry and 'best_known_colors' in entry:
+                    tabu_best_dict[entry['graph_name']] = entry['best_known_colors']
+            
+            if tabu_best_dict:
+                print(f"\n{'='*70}")
+                print(f"Loaded Tabu Tuning Best Results: {len(tabu_best_dict)} graphs")
+                print(f"{'='*70}")
+                for graph_name, colors in sorted(tabu_best_dict.items()):
+                    print(f"  {graph_name}: {colors} colors (from tabu search tuning)")
+                print(f"{'='*70}\n")
+            
+            return tabu_best_dict
+            
+        except (json.JSONDecodeError, Exception) as e:
+            print(f"⚠ Warning: Error loading tabu tuning best results: {e}")
+            return {}
     
     def load_best_known_results(self) -> Dict[str, int]:
         """
