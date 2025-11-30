@@ -128,7 +128,7 @@ def aco_objective_function(trial, params, tuning_graphs, aco_class, verbose, rec
             if diff == 0:
                 print(f"  🎯 Perfect Match! ACO: {result['color_count']} = Tabu Best: {tabu_best}")
             elif diff > 0:
-                print(f"  📊 ACO: {result['color_count']} vs Tabu Best: {tabu_best} (+{diff} colors)")
+                print(f"  ⚠️ ACO: {result['color_count']} vs Tabu Best: {tabu_best} (+{diff} colors)")
             else:
                 print(f"  🏆 Better! ACO: {result['color_count']} vs Tabu Best: {tabu_best} ({diff} colors)")
         print(f"  ⏱  Time: {elapsed_time:.2f}s")

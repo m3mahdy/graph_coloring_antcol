@@ -139,11 +139,12 @@ class GraphDataLoader:
     def load_tuning_dataset(self) -> Tuple[list[Tuple[str, nx.Graph]], Dict[str, int]]:
         """
         Load all graphs from the tuning dataset and their best known results.
+        Graphs are ordered from smallest to largest by number of nodes.
         Prints summary after loading each graph.
         
         Returns:
             Tuple of:
-                - List of tuples (filename, NetworkX Graph)
+                - List of tuples (filename, NetworkX Graph) sorted by graph size
                 - Dictionary mapping graph names to best known color counts
         """
         print(f"\n{'='*70}")
@@ -161,6 +162,13 @@ class GraphDataLoader:
             except Exception as e:
                 print(f"  {filepath.name}: Error - {e}")
         
+        # Sort graphs by size (number of nodes) - smallest first
+        graphs.sort(key=lambda x: x[1].number_of_nodes())
+        
+        print(f"\n{'='*70}")
+        print(f"Graphs ordered by size (smallest to largest):")
+        for i, (name, graph) in enumerate(graphs, 1):
+            print(f"  {i}. {name}: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges")
         print(f"{'='*70}\n")
         
         # Load tabu search best values from tuning
@@ -171,10 +179,11 @@ class GraphDataLoader:
     def load_testing_dataset(self) -> list[Tuple[str, nx.Graph]]:
         """
         Load all graphs from the testing dataset and return as a list.
+        Graphs are ordered from smallest to largest by number of nodes.
         Prints summary after loading each graph.
         
         Returns:
-            List of tuples (filename, NetworkX Graph)
+            List of tuples (filename, NetworkX Graph) sorted by graph size
         """
         print(f"\n{'='*70}")
         print(f"Loading Testing Dataset: {self.dataset_name}")
@@ -191,7 +200,15 @@ class GraphDataLoader:
             except Exception as e:
                 print(f"  {filepath.name}: Error - {e}")
         
+        # Sort graphs by size (number of nodes) - smallest first
+        graphs.sort(key=lambda x: x[1].number_of_nodes())
+        
+        print(f"\n{'='*70}")
+        print(f"Graphs ordered by size (smallest to largest):")
+        for i, (name, graph) in enumerate(graphs, 1):
+            print(f"  {i}. {name}: {graph.number_of_nodes()} nodes, {graph.number_of_edges()} edges")
         print(f"{'='*70}\n")
+        
         return graphs
     
     def _load_tabu_tuning_best_results(self) -> Dict[str, int]:
