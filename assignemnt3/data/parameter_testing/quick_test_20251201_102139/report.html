@@ -1,0 +1,373 @@
+
+    <!DOCTYPE html>
+    <html>
+    <head>
+        <title>ACO Quick Parameter Testing Report</title>
+        <style>
+            body { font-family: Arial, sans-serif; margin: 20px; background-color: #f5f5f5; }
+            h1 { color: #2c3e50; border-bottom: 3px solid #3498db; padding-bottom: 10px; }
+            h2 { color: #34495e; margin-top: 30px; }
+            .summary { background-color: white; padding: 20px; border-radius: 8px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); margin-bottom: 20px; }
+            table { border-collapse: collapse; width: 100%; margin: 20px 0; background-color: white; }
+            th, td { border: 1px solid #ddd; padding: 12px; text-align: left; }
+            th { background-color: #3498db; color: white; }
+            tr:nth-child(even) { background-color: #f9f9f9; }
+            tr:hover { background-color: #e8f4f8; }
+            img { max-width: 100%; margin: 20px 0; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); }
+            .best { background-color: #d4edda; font-weight: bold; }
+        </style>
+    </head>
+    <body>
+        <h1>ACO Quick Parameter Testing Report</h1>
+        <p><strong>Generated:</strong> 2025-12-01 10:21:40</p>
+        <p><strong>Graph:</strong> gc_100_9 (100 nodes, 4461 edges)</p>
+        <p><strong>Total Tests:</strong> 15</p>
+        <p><strong>Tabu Best Known:</strong> 38 colors</p>
+        
+        <div class="summary">
+            <h2>Best Configuration (Test 1)</h2>
+            <p><strong>Color Count:</strong> 41 colors</p>
+            <p><strong>Execution Time:</strong> 317.57 seconds</p>
+            <p><strong>Parameters:</strong></p>
+            <ul>
+                <li>ant_count: 100</li>
+                <li>iterations: 150</li>
+                <li>alpha: 1.0</li>
+                <li>beta: 4.0</li>
+                <li>rho: 0.2</li>
+                <li>Q: 5.0</li>
+                <li>patience: 0.7</li>
+                <li>num_strategies: 3</li>
+            </ul>
+        </div>
+        
+        <h2>Summary Statistics</h2>
+        <p><strong>Best Color Count:</strong> 41</p>
+        <p><strong>Average Color Count:</strong> 41.00</p>
+        <p><strong>Worst Color Count:</strong> 41</p>
+        <p><strong>Average Execution Time:</strong> 350.84s</p>
+        
+        <h2>Color Count by Configuration</h2>
+        <img src="color_counts.png" alt="Color Counts">
+        
+        <h2>Execution Time by Configuration</h2>
+        <img src="execution_times.png" alt="Execution Times">
+        
+        <h2>Performance vs Time Tradeoff</h2>
+        <img src="performance_vs_time.png" alt="Performance vs Time">
+        
+        <h2>Detailed Results</h2>
+        <table border="1" class="dataframe dataframe">
+  <thead>
+    <tr style="text-align: right;">
+      <th>test_id</th>
+      <th>graph_name</th>
+      <th>color_count</th>
+      <th>iterations_completed</th>
+      <th>execution_time</th>
+      <th>ant_count</th>
+      <th>iterations</th>
+      <th>alpha</th>
+      <th>beta</th>
+      <th>rho</th>
+      <th>Q</th>
+      <th>patience</th>
+      <th>num_strategies</th>
+      <th>color_preference_weight</th>
+      <th>constraint_penalty_weight</th>
+      <th>min_pheromone</th>
+      <th>max_pheromone</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td>1</td>
+      <td>gc_100_9</td>
+      <td>41</td>
+      <td>105</td>
+      <td>317.567513</td>
+      <td>100</td>
+      <td>150</td>
+      <td>1.0</td>
+      <td>4.0</td>
+      <td>0.2</td>
+      <td>5.0</td>
+      <td>0.7</td>
+      <td>3</td>
+      <td>15.0</td>
+      <td>0.3</td>
+      <td>0.10</td>
+      <td>10.0</td>
+    </tr>
+    <tr>
+      <td>2</td>
+      <td>gc_100_9</td>
+      <td>41</td>
+      <td>105</td>
+      <td>163.601607</td>
+      <td>50</td>
+      <td>150</td>
+      <td>1.0</td>
+      <td>4.0</td>
+      <td>0.2</td>
+      <td>5.0</td>
+      <td>0.7</td>
+      <td>3</td>
+      <td>15.0</td>
+      <td>0.3</td>
+      <td>0.10</td>
+      <td>10.0</td>
+    </tr>
+    <tr>
+      <td>3</td>
+      <td>gc_100_9</td>
+      <td>41</td>
+      <td>105</td>
+      <td>477.805706</td>
+      <td>150</td>
+      <td>150</td>
+      <td>1.0</td>
+      <td>4.0</td>
+      <td>0.2</td>
+      <td>5.0</td>
+      <td>0.7</td>
+      <td>3</td>
+      <td>15.0</td>
+      <td>0.3</td>
+      <td>0.10</td>
+      <td>10.0</td>
+    </tr>
+    <tr>
+      <td>4</td>
+      <td>gc_100_9</td>
+      <td>41</td>
+      <td>70</td>
+      <td>211.787077</td>
+      <td>100</td>
+      <td>100</td>
+      <td>1.0</td>
+      <td>4.0</td>
+      <td>0.2</td>
+      <td>5.0</td>
+      <td>0.7</td>
+      <td>3</td>
+      <td>15.0</td>
+      <td>0.3</td>
+      <td>0.10</td>
+      <td>10.0</td>
+    </tr>
+    <tr>
+      <td>5</td>
+      <td>gc_100_9</td>
+      <td>41</td>
+      <td>140</td>
+      <td>424.182276</td>
+      <td>100</td>
+      <td>200</td>
+      <td>1.0</td>
+      <td>4.0</td>
+      <td>0.2</td>
+      <td>5.0</td>
+      <td>0.7</td>
+      <td>3</td>
+      <td>15.0</td>
+      <td>0.3</td>
+      <td>0.10</td>
+      <td>10.0</td>
+    </tr>
+    <tr>
+      <td>6</td>
+      <td>gc_100_9</td>
+      <td>41</td>
+      <td>105</td>
+      <td>318.174178</td>
+      <td>100</td>
+      <td>150</td>
+      <td>0.5</td>
+      <td>4.0</td>
+      <td>0.2</td>
+      <td>5.0</td>
+      <td>0.7</td>
+      <td>3</td>
+      <td>15.0</td>
+      <td>0.3</td>
+      <td>0.10</td>
+      <td>10.0</td>
+    </tr>
+    <tr>
+      <td>7</td>
+      <td>gc_100_9</td>
+      <td>41</td>
+      <td>105</td>
+      <td>317.388644</td>
+      <td>100</td>
+      <td>150</td>
+      <td>2.0</td>
+      <td>4.0</td>
+      <td>0.2</td>
+      <td>5.0</td>
+      <td>0.7</td>
+      <td>3</td>
+      <td>15.0</td>
+      <td>0.3</td>
+      <td>0.10</td>
+      <td>10.0</td>
+    </tr>
+    <tr>
+      <td>8</td>
+      <td>gc_100_9</td>
+      <td>41</td>
+      <td>105</td>
+      <td>317.947351</td>
+      <td>100</td>
+      <td>150</td>
+      <td>1.0</td>
+      <td>2.0</td>
+      <td>0.2</td>
+      <td>5.0</td>
+      <td>0.7</td>
+      <td>3</td>
+      <td>15.0</td>
+      <td>0.3</td>
+      <td>0.10</td>
+      <td>10.0</td>
+    </tr>
+    <tr>
+      <td>9</td>
+      <td>gc_100_9</td>
+      <td>41</td>
+      <td>105</td>
+      <td>318.194357</td>
+      <td>100</td>
+      <td>150</td>
+      <td>1.0</td>
+      <td>6.0</td>
+      <td>0.2</td>
+      <td>5.0</td>
+      <td>0.7</td>
+      <td>3</td>
+      <td>15.0</td>
+      <td>0.3</td>
+      <td>0.10</td>
+      <td>10.0</td>
+    </tr>
+    <tr>
+      <td>10</td>
+      <td>gc_100_9</td>
+      <td>41</td>
+      <td>105</td>
+      <td>318.181594</td>
+      <td>100</td>
+      <td>150</td>
+      <td>1.0</td>
+      <td>4.0</td>
+      <td>0.1</td>
+      <td>5.0</td>
+      <td>0.7</td>
+      <td>3</td>
+      <td>15.0</td>
+      <td>0.3</td>
+      <td>0.10</td>
+      <td>10.0</td>
+    </tr>
+    <tr>
+      <td>11</td>
+      <td>gc_100_9</td>
+      <td>41</td>
+      <td>105</td>
+      <td>318.859967</td>
+      <td>100</td>
+      <td>150</td>
+      <td>1.0</td>
+      <td>4.0</td>
+      <td>0.3</td>
+      <td>5.0</td>
+      <td>0.7</td>
+      <td>3</td>
+      <td>15.0</td>
+      <td>0.3</td>
+      <td>0.10</td>
+      <td>10.0</td>
+    </tr>
+    <tr>
+      <td>12</td>
+      <td>gc_100_9</td>
+      <td>41</td>
+      <td>75</td>
+      <td>227.742675</td>
+      <td>100</td>
+      <td>150</td>
+      <td>1.0</td>
+      <td>4.0</td>
+      <td>0.2</td>
+      <td>5.0</td>
+      <td>0.5</td>
+      <td>3</td>
+      <td>15.0</td>
+      <td>0.3</td>
+      <td>0.10</td>
+      <td>10.0</td>
+    </tr>
+    <tr>
+      <td>13</td>
+      <td>gc_100_9</td>
+      <td>41</td>
+      <td>135</td>
+      <td>409.036914</td>
+      <td>100</td>
+      <td>150</td>
+      <td>1.0</td>
+      <td>4.0</td>
+      <td>0.2</td>
+      <td>5.0</td>
+      <td>0.9</td>
+      <td>3</td>
+      <td>15.0</td>
+      <td>0.3</td>
+      <td>0.10</td>
+      <td>10.0</td>
+    </tr>
+    <tr>
+      <td>14</td>
+      <td>gc_100_9</td>
+      <td>41</td>
+      <td>180</td>
+      <td>816.360915</td>
+      <td>150</td>
+      <td>200</td>
+      <td>0.5</td>
+      <td>2.0</td>
+      <td>0.3</td>
+      <td>10.0</td>
+      <td>0.9</td>
+      <td>3</td>
+      <td>5.0</td>
+      <td>0.5</td>
+      <td>0.01</td>
+      <td>15.0</td>
+    </tr>
+    <tr>
+      <td>15</td>
+      <td>gc_100_9</td>
+      <td>41</td>
+      <td>100</td>
+      <td>305.760226</td>
+      <td>100</td>
+      <td>200</td>
+      <td>2.0</td>
+      <td>6.0</td>
+      <td>0.1</td>
+      <td>1.0</td>
+      <td>0.5</td>
+      <td>2</td>
+      <td>25.0</td>
+      <td>0.1</td>
+      <td>0.10</td>
+      <td>5.0</td>
+    </tr>
+  </tbody>
+</table>
+        
+    </body>
+    </html>
+    
