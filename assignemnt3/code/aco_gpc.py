@@ -697,17 +697,15 @@ class ACOGraphColoring:
         solution = {}
         used_colors = set()
         
-        # Start with start_node
-        colored = [start_node]
-        uncolored = [n for n in self.nodes if n != start_node]
+        # Start with start_node (will be colored first)
+        colored = []
+        uncolored = list(self.nodes)
         
         # Color all nodes
-        for _ in range(self.N):
+        while len(uncolored) > 0:
             if len(colored) == 0:
-                # First node
+                # First node - use start_node
                 node = start_node
-            elif len(uncolored) == 0:
-                break
             else:
                 # Select next node using node-to-node pheromones
                 # Calculate transition scores from all colored nodes to each uncolored node
@@ -1150,17 +1148,17 @@ class ACOGraphColoring:
                 else:
                     tabu_info = f" - 🏆 Better than Tabu: {self.tabu_best} ({diff})"
             
-            # Verbose output - print each iteration on new line
-            if self.verbose and iteration % 10 == 0:
+            # esstinal output, not tied to verbose - print iterations progress
+            if iteration % 10 == 0:
                 print(f"💬 {prefix}Iteration {iteration}/{self.iterations}: "
                         f"iter_best={iter_best['num_colors']}, "
                         f"global_best={best_global_colors}{tabu_info}")
             
             # Check early stopping condition
             if self.patience is not None and iterations_without_improvement >= self.patience:
-                if self.verbose:
-                    print()  # New line after progress updates
-                    print(f"❌ {prefix} Early stopping: No improvement for {self.patience} iterations")
+                # esstinal output, not tied to verbose - alert on early stopping
+                print()  # New line after progress updates
+                print(f"❌ {prefix} Early stopping: No improvement for {self.patience} iterations")
                 return {
                     'solution': self.best_global_solution,
                     'color_count': best_global_colors,
