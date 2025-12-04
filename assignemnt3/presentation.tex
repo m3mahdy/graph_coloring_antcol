@@ -26,17 +26,23 @@
 \subtitle{Population-based Metaheuristic}
 \author[]{Mohammed Edris Mahdy (446910613) \\ Mohammed Ahmed Ewida (446910614) \\ \vspace{0.5cm} \textit{Under the Supervision of:} \\ Prof. Manar Hosny}
 \institute[KSU]{King Saud University \\ College of Computer and Information Sciences \\ Department of Computer Science}
-\date{December 7, 2025}
+\date{}
 
 \begin{document}
 
 % Title slide
 \begin{frame}
-\titlepage
-\vspace{-0.5cm}
 \begin{center}
-\includegraphics[width=0.25\textwidth]{figures/KSU_Logo.png}
+\vspace{-0.5cm}
+\includegraphics[width=0.35\textwidth]{figures/KSU_Logo.png}
+\vspace{0.1cm}
+
+{\large{King Saud University}} \\
+{\normalsize College of Computer and Information Sciences} \\
+{\normalsize Department of Computer Science}
+\vspace{0.3cm}
 \end{center}
+\titlepage
 \end{frame}
 
 % Outline
@@ -114,34 +120,53 @@ $$P(c) = \frac{[\tau[v][c]]^{\alpha} \cdot [\eta[c]]^{\beta}}{\sum_{c'} [\tau[v]
 \vspace{0.3cm}
 \textbf{Parallel Execution:}
 \begin{itemize}
-    \item 82 ants per iteration
+    \item $x$ ants per iteration
     \item Multi-threading
 \end{itemize}
 \end{columns}
 \end{frame}
 
-\begin{frame}{ACO Algorithm Pseudocode}
-\tiny
+\begin{frame}{ACO Algorithm Pseudocode - Main Loop}
+\scriptsize
 \textbf{Initialize:} pheromone matrix $\tau[v][c] \leftarrow \tau_0$ \\[0.5em]
 
-\textbf{FOR} iteration = 1 to max\_iterations: \\
-\hspace{1em} solutions $\leftarrow$ [] \\
-\hspace{1em} \textbf{FOR} ant = 1 to m (parallel): \hspace{2em} \textit{\textcolor{gray}{// Ant Solution Construction}} \\
-\hspace{2em} solution $\leftarrow$ \{\} \\
-\hspace{2em} vertices $\leftarrow$ shuffle(V) \\
-\hspace{2em} \textbf{FOR} each $v$ in vertices: \hspace{2em} \textit{\textcolor{gray}{// Sequential vertex coloring}} \\
-\hspace{3em} valid\_colors $\leftarrow$ \{$c$ : no neighbor uses $c$\} \\
-\hspace{3em} \textbf{IF} valid\_colors is empty: \\
-\hspace{4em} valid\_colors $\leftarrow$ \{new color\} \\
-\hspace{3em} $\eta[c] \leftarrow 2.0$ if $c$ used, else $1.0$ \hspace{2em} \textit{\textcolor{gray}{// Heuristic}} \\
-\hspace{3em} $P(c) \leftarrow \frac{[\tau[v][c]]^{\alpha} \cdot [\eta[c]]^{\beta}}{\sum_{c'} [\tau[v][c']]^{\alpha} \cdot [\eta[c']]^{\beta}}$ \hspace{2em} \textit{\textcolor{gray}{// Probability}} \\
-\hspace{3em} solution[$v$] $\leftarrow$ select $c$ with probability $P(c)$ \\
-\hspace{2em} solutions.append(solution) \\
-\hspace{1em} best\_solution $\leftarrow$ argmin(solutions) \hspace{2em} \textit{\textcolor{gray}{// Select iteration best}} \\
-\hspace{1em} \textbf{Evaporate:} $\tau[v][c] \leftarrow (1-\rho) \cdot \tau[v][c]$ for all $v, c$ \\
-\hspace{1em} \textbf{Deposit:} $\tau[v][c] \leftarrow \tau[v][c] + \frac{Q}{\text{num\_colors}}$ for $(v,c)$ in best\_solution \\
-\hspace{1em} \textbf{IF} no improvement for patience $\times$ max\_iterations: \\
+\textbf{FOR} iteration = 1 to max\_iterations: \\[0.3em]
+\hspace{1em} solutions $\leftarrow$ [] \\[0.3em]
+\hspace{1em} \textbf{FOR} ant = 1 to m: \hspace{2em} \textit{\textcolor{gray}{// Parallel execution}} \\[0.3em]
+\hspace{2em} solution $\leftarrow$ ConstructSolution() \\[0.3em]
+\hspace{2em} solutions.append(solution) \\[0.5em]
+
+\hspace{1em} best\_solution $\leftarrow$ argmin(solutions) \hspace{2em} \textit{\textcolor{gray}{// Iteration best}} \\[0.5em]
+
+\hspace{1em} \textbf{Evaporate:} $\tau[v][c] \leftarrow (1-\rho) \cdot \tau[v][c]$ for all $v, c$ \\[0.5em]
+
+\hspace{1em} \textbf{Deposit:} $\tau[v][c] \leftarrow \tau[v][c] + \frac{Q}{\text{num\_colors}}$ for $(v,c)$ in best\_solution \\[0.5em]
+
+\hspace{1em} \textbf{IF} no improvement for patience $\times$ max\_iterations: \\[0.3em]
 \hspace{2em} \textbf{break} \hspace{2em} \textit{\textcolor{gray}{// Early stopping}} \\[0.5em]
+
+\textbf{RETURN} best solution found
+\end{frame}
+
+\begin{frame}{ACO Algorithm - Ant Solution Construction}
+\scriptsize
+\textbf{ConstructSolution():} \\[0.5em]
+
+solution $\leftarrow$ \{\} \\[0.3em]
+vertices $\leftarrow$ shuffle(V) \hspace{2em} \textit{\textcolor{gray}{// Random order for diversity}} \\[0.5em]
+
+\textbf{FOR} each $v$ in vertices: \hspace{2em} \textit{\textcolor{gray}{// Sequential vertex coloring}} \\[0.3em]
+\hspace{1em} valid\_colors $\leftarrow$ \{$c$ : no neighbor of $v$ uses $c$\} \\[0.3em]
+\hspace{1em} \textbf{IF} valid\_colors is empty: \\[0.3em]
+\hspace{2em} valid\_colors $\leftarrow$ \{new color\} \\[0.5em]
+
+\hspace{1em} \textit{\textcolor{gray}{// Heuristic: favor used colors (reuse)}} \\[0.3em]
+\hspace{1em} $\eta[c] \leftarrow 2.0$ if $c$ already used, else $1.0$ \\[0.5em]
+
+\hspace{1em} \textit{\textcolor{gray}{// Probabilistic selection based on pheromone and heuristic}} \\[0.3em]
+\hspace{1em} $P(c) \leftarrow \frac{[\tau[v][c]]^{\alpha} \cdot [\eta[c]]^{\beta}}{\sum_{c' \in valid\_colors} [\tau[v][c']]^{\alpha} \cdot [\eta[c']]^{\beta}}$ \\[0.5em]
+
+\hspace{1em} solution[$v$] $\leftarrow$ select $c$ with probability $P(c)$ \\[0.5em]
 
 \textbf{RETURN} best solution found
 \end{frame}
@@ -197,7 +222,7 @@ Dictionary mapping: $\text{Solution} = \{v_1: c_1, v_2: c_2, \dots, v_n: c_n\}$
 \end{frame}
 
 % Section 3: Experimental Setup
-\section{Experimental Setup}
+\section{Hyperparameter Tuning}
 
 \begin{frame}{Hyperparameter Tuning with Optuna}
 \begin{block}{Optimization Setup}
@@ -263,7 +288,7 @@ $\rightarrow$ Intensification dominates over diversification
 \begin{frame}{Parameter Analysis}
 \begin{figure}
     \centering
-    \includegraphics[width=0.75\textwidth]{figures/slice.png}
+    \includegraphics[width=0.95\textwidth]{figures/slice.png}
     \caption{Parameter slice plots - Beta and iterations show clear trends}
 \end{figure}
 \end{frame}
@@ -271,7 +296,7 @@ $\rightarrow$ Intensification dominates over diversification
 \begin{frame}{Parameter Importance}
 \begin{figure}
     \centering
-    \includegraphics[width=0.7\textwidth]{figures/importances.png}
+    \includegraphics[width=0.9\textwidth,height=0.7\textheight,keepaspectratio]{figures/importances.png}
     \caption{Iterations and Beta dominate performance; Rho has minimal impact}
 \end{figure}
 \end{frame}
@@ -435,55 +460,6 @@ Questions whether ACO's pheromone learning is well-suited for GCP
 
 % Section 5: Conclusion
 \section{Conclusion}
-
-\begin{frame}{Contributions}
-\begin{enumerate}
-    \item \textbf{Implementation:}
-    \begin{itemize}
-        \item Constructive ACO with dynamic pheromone matrix
-        \item 82 parallel ants using multi-threading
-    \end{itemize}
-    
-    \item \textbf{Comprehensive Tuning:}
-    \begin{itemize}
-        \item Optuna framework: 40 trials, 6 parallel workers, 46 hours
-        \item 15-color improvement (215 → 200 colors)
-    \end{itemize}
-    
-    \item \textbf{Empirical Comparison:}
-    \begin{itemize}
-        \item Three-way analysis: Greedy vs TS vs ACO
-        \item DIMACS benchmarks (250-1000 vertices)
-        \item Reveals constructive vs improvement-based trade-offs
-    \end{itemize}
-    
-    \item \textbf{Insights:}
-    \begin{itemize}
-        \item Population-based methods not inherently superior
-        \item For GCP: heuristics and search time > pheromone dynamics
-        \item No universally best algorithm - problem-dependent
-    \end{itemize}
-\end{enumerate}
-\end{frame}
-
-\begin{frame}{Future Work}
-\textbf{Potential Enhancements:}
-\begin{itemize}
-    \item Improved heuristics (degree-based, conflict-prediction)
-    \item Hybrid approaches (TS-quality initialization for pheromones)
-    \item Local search post-processing
-    \item Alternative pheromone models (edge-color instead of node-color)
-    \item Adaptive parameter control
-\end{itemize}
-
-\vspace{0.5cm}
-\textbf{Research Directions:}
-\begin{itemize}
-    \item Investigation of why pheromone learning fails for GCP
-    \item Comparison with other population-based methods (GA, PSO)
-    \item Problem structure analysis for metaheuristic selection
-\end{itemize}
-\end{frame}
 
 \begin{frame}[plain]
 \centering
