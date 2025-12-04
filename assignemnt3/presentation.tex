@@ -199,15 +199,14 @@ Dictionary mapping: $\text{Solution} = \{v_1: c_1, v_2: c_2, \dots, v_n: c_n\}$
 \textbf{Intensification:}
 \begin{itemize}
     \item Pheromone reinforcement on best solutions
-    \item Heuristic preference for used colors ($\eta=2.0$)
     \item High $\alpha$ increases exploitation
-    \item High $\beta$ increases intensification
 \end{itemize}
 
 \column{0.5\textwidth}
 \textbf{Diversification:}
 \begin{itemize}
     \item Pheromone evaporation $(1-\rho)$
+    \item High $\beta$ increases diversification
     \item Probabilistic (not greedy) selection
     \item Random node ordering
     \item Multiple parallel ants

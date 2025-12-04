@@ -279,17 +279,17 @@ ACO balances exploration and exploitation through multiple complementary mechani
     \item \textbf{Intensification (Exploitation):}
     \begin{itemize}
         \item \textbf{Pheromone Reinforcement:} Iteration-best solutions deposit pheromones on their node-color pairs, biasing future ants toward historically successful assignments
-        \item \textbf{Heuristic Preference:} The heuristic function $\eta[c]$ assigns higher values ($2.0$) to already-used colors, encouraging color reuse to minimize $k$
         \item \textbf{Alpha Parameter ($\alpha$):} Controls pheromone influence; higher $\alpha$ increases exploitation of learned patterns
     \end{itemize}
     
     \item \textbf{Diversification (Exploration):}
     \begin{itemize}
         \item \textbf{Pheromone Evaporation:} Global decay by factor $(1-\rho)$ prevents unlimited accumulation and allows forgetting of outdated patterns
+        \item \textbf{Heuristic Preference:} The heuristic function $\eta[c]$ assigns higher values ($2.0$) to already-used colors, encouraging color reuse to minimize $k$
+        \item \textbf{Beta Parameter ($\beta$):} Controls heuristic influence; higher $\beta$ increases diversification and exploration
         \item \textbf{Probabilistic Selection:} Color selection is stochastic rather than greedy, allowing exploration of sub-optimal paths that may lead to better global solutions
         \item \textbf{Random Node Ordering:} Each ant constructs solutions with different node visitation sequences, exploring diverse solution construction paths
         \item \textbf{Multiple Ants:} Parallel construction of $m$ solutions per iteration samples different regions of the solution space simultaneously
-        \item \textbf{Beta Parameter ($\beta$):} Controls heuristic influence; higher $\beta$ increases exploitation, while lower values promote exploration
     \end{itemize}
 \end{itemize}
 
@@ -392,7 +392,7 @@ Deeper analysis through parameter slice plots (Figure~\ref{fig:optuna_slice}) an
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.7\textwidth]{figures/importances.png}
+    \includegraphics[width=0.6\textwidth]{figures/importances.png}
     \caption{Hyperparameter importance analysis}
     \label{fig:optuna_importance}
 \end{figure}
@@ -401,7 +401,7 @@ The best trial configuration (trial 19) successfully produced a valid conflict-f
 
 \begin{figure}[H]
     \centering
-    \includegraphics[width=0.8\textwidth]{figures/best_trial_graph_coloring.png}
+    \includegraphics[width=0.7\textwidth]{figures/best_trial_graph_coloring.png}
     \caption{Best trial (Trial 19) graph coloring for gc\_500\_9}
     \label{fig:best_trial}
 \end{figure}
