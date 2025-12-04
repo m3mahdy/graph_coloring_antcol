@@ -120,38 +120,33 @@ $$P(c) = \frac{[\tau[v][c]]^{\alpha} \cdot [\eta[c]]^{\beta}}{\sum_{c'} [\tau[v]
 \end{columns}
 \end{frame}
 
-% \begin{frame}{ACO Algorithm Pseudocode}
-\begin{algorithmic}[1]
+\begin{frame}{ACO Algorithm Pseudocode}
 \tiny
-\STATE \textbf{Initialize:} pheromone matrix $\tau[v][c] \leftarrow \tau_0$
-\FOR{iteration = 1 to max\_iterations}
-    \STATE solutions $\leftarrow$ []
-    \FOR{ant = 1 to m (parallel)}  \textit{\textcolor{gray}{// Ant Solution Construction}}
-        \STATE solution $\leftarrow$ \{\}
-        \STATE vertices $\leftarrow$ shuffle(V)
-        \FOR{each $v$ in vertices}  \textit{\textcolor{gray}{// Sequential vertex coloring}}
-            \STATE valid\_colors $\leftarrow$ \{$c$ : no neighbor uses $c$\}
-            \IF{valid\_colors is empty}
-                \STATE valid\_colors $\leftarrow$ \{new color\}
-            \ENDIF
-            \STATE $\eta[c] \leftarrow 2.0$ if $c$ used, else $1.0$  \textit{\textcolor{gray}{// Heuristic}}
-            \STATE $P(c) \leftarrow \frac{[\tau[v][c]]^{\alpha} \cdot [\eta[c]]^{\beta}}{\sum_{c'} [\tau[v][c']]^{\alpha} \cdot [\eta[c']]^{\beta}}$  \textit{\textcolor{gray}{// Probability}}
-            \STATE solution[$v$] $\leftarrow$ select $c$ with probability $P(c)$
-        \ENDFOR
-        \STATE solutions.append(solution)
-    \ENDFOR
-    \STATE best\_solution $\leftarrow$ argmin(solutions)  \textit{\textcolor{gray}{// Select iteration best}}
-    \STATE \textbf{Evaporate:} $\tau[v][c] \leftarrow (1-\rho) \cdot \tau[v][c]$ for all $v, c$
-    \STATE \textbf{Deposit:} $\tau[v][c] \leftarrow \tau[v][c] + \frac{Q}{\text{num\_colors}}$ for $(v,c)$ in best\_solution
-    \IF{no improvement for patience $\times$ max\_iterations}
-        \STATE \textbf{break}  \textit{\textcolor{gray}{// Early stopping}}
-    \ENDIF
-\ENDFOR
-\STATE \textbf{return} best solution found
-\end{algorithmic}
+\textbf{Initialize:} pheromone matrix $\tau[v][c] \leftarrow \tau_0$ \\[0.5em]
+
+\textbf{FOR} iteration = 1 to max\_iterations: \\
+\hspace{1em} solutions $\leftarrow$ [] \\
+\hspace{1em} \textbf{FOR} ant = 1 to m (parallel): \hspace{2em} \textit{\textcolor{gray}{// Ant Solution Construction}} \\
+\hspace{2em} solution $\leftarrow$ \{\} \\
+\hspace{2em} vertices $\leftarrow$ shuffle(V) \\
+\hspace{2em} \textbf{FOR} each $v$ in vertices: \hspace{2em} \textit{\textcolor{gray}{// Sequential vertex coloring}} \\
+\hspace{3em} valid\_colors $\leftarrow$ \{$c$ : no neighbor uses $c$\} \\
+\hspace{3em} \textbf{IF} valid\_colors is empty: \\
+\hspace{4em} valid\_colors $\leftarrow$ \{new color\} \\
+\hspace{3em} $\eta[c] \leftarrow 2.0$ if $c$ used, else $1.0$ \hspace{2em} \textit{\textcolor{gray}{// Heuristic}} \\
+\hspace{3em} $P(c) \leftarrow \frac{[\tau[v][c]]^{\alpha} \cdot [\eta[c]]^{\beta}}{\sum_{c'} [\tau[v][c']]^{\alpha} \cdot [\eta[c']]^{\beta}}$ \hspace{2em} \textit{\textcolor{gray}{// Probability}} \\
+\hspace{3em} solution[$v$] $\leftarrow$ select $c$ with probability $P(c)$ \\
+\hspace{2em} solutions.append(solution) \\
+\hspace{1em} best\_solution $\leftarrow$ argmin(solutions) \hspace{2em} \textit{\textcolor{gray}{// Select iteration best}} \\
+\hspace{1em} \textbf{Evaporate:} $\tau[v][c] \leftarrow (1-\rho) \cdot \tau[v][c]$ for all $v, c$ \\
+\hspace{1em} \textbf{Deposit:} $\tau[v][c] \leftarrow \tau[v][c] + \frac{Q}{\text{num\_colors}}$ for $(v,c)$ in best\_solution \\
+\hspace{1em} \textbf{IF} no improvement for patience $\times$ max\_iterations: \\
+\hspace{2em} \textbf{break} \hspace{2em} \textit{\textcolor{gray}{// Early stopping}} \\[0.5em]
+
+\textbf{RETURN} best solution found
 \end{frame}
 
-% \begin{frame}{Solution Representation \& Constraint Handling}
+\begin{frame}{Solution Representation \& Constraint Handling}
 \begin{block}{Solution Representation}
 Dictionary mapping: $\text{Solution} = \{v_1: c_1, v_2: c_2, \dots, v_n: c_n\}$
 \end{block}
