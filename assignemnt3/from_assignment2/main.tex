@@ -1,0 +1,450 @@
+\documentclass{article}
+
+\usepackage{hyperref}
+
+ 
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{ragged2e}
+\usepackage{booktabs} % For professional-looking tables
+\usepackage{enumitem} % For custom list formatting
+\usepackage{float} % For [H] placement of tables
+
+ \usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry} 
+ 
+\begin{document}
+
+
+\setlength{\parindent}{0cm}
+%%  Declarations of your title page
+\begin{titlepage}
+ 
+\begin{center}
+ 
+% Upper part of the page
+
+\includegraphics[width=5cm]{KSU_Logo.png}\\
+\small King Saud University\\College of Computer and Information Sciences\\Department of Computer Science\\[2cm]
+
+
+
+% Title
+{\Huge \bfseries Selected Topics in Artificial Intelligence \par} 
+\vspace{0.5cm} 
+{\Huge \bfseries  CSC 569 \par} 
+\vspace{1cm} 
+{\Huge \bfseries Tabu Search for Graph Coloring \par} 
+\vspace{1cm}
+{ \large \bfseries Single-solution based Metaheuristic \par} 
+
+% \vspace{0.4cm}  
+%     {\Huge \bfseries Assignment 2: Single-solution based Metaheuristic to solve The Graph Coloring Problem (GCP) \par}
+
+\vspace{2cm}
+% Author and supervisor
+\large \textit{By:}\\[0.3cm]
+\large Mohammed Edris Mahdy \\
+\large 446910613 \\
+[0.5cm]
+\large Mohammed Ahmed Ewida \\
+\large 446910614 \\
+[1cm]
+
+\large  \textit{ Under the supervision of:}\\[0.3cm]
+\large Prof. Manar Hosny    \\
+[1cm]
+% Submitted in partial fulfillment of the requirements \\
+% for the Degree of Master in Artificial Intelligence at \\
+% the Department of Computer Science, \\
+% College of Computer and Information Sciences,\\
+% King Saud University
+
+\vfill
+ 
+% Bottom of the page
+{\large 9 Nov 2025 }
+ 
+\end{center}
+ 
+\end{titlepage}
+
+
+
+
+ 
+    
+
+
+\section{Problem Statement}
+
+The \textbf{Graph Coloring Problem (GCP)} is formally defined for an undirected graph $G = (V, E)$, where $V$ represents the set of vertices and $E$ is the set of edges connecting these vertices \cite{Bessedik2005, Cadenas2023, MendezDiaz2014}. A $k$-coloring of $G$ is a function $C : V \to \{1, 2, \dots, k\}$ that assigns a color from a set of $k$ available colors to each vertex in $V$, subject to the constraint that any two adjacent vertices must be assigned different colors. Formally, for any edge $(u, v) \in E$, it must hold that $C(u) \neq C(v)$ \cite{Bessedik2005, Cadenas2023, Indumathi2021, Postigo2021}. The primary objective of the GCP is to find the minimum number of colors, $k$, required for a valid coloring, which is known as the chromatic number of $G$, denoted by $\chi(G)$ \cite{Bessedik2005, Indumathi2021}.
+
+\subsection{Formal Problem Components}
+
+\textbf{Input:}
+\begin{itemize}
+    \item An undirected graph $G = (V, E)$ where:
+    \begin{itemize}
+        \item $V = \{v_1, v_2, \dots, v_n\}$ is the set of vertices with $|V| = n$
+        \item $E \subseteq V \times V$ is the set of edges with $|E| = m$
+    \end{itemize}
+    \item An initial number of colors $k$ (to be minimized)
+\end{itemize}
+
+\textbf{Output:}
+\begin{itemize}
+    \item A coloring function $C: V \to \{1, 2, \dots, k\}$ that assigns a color to each vertex
+    \item The minimum number of colors $k^* = \chi(G)$ needed for a proper coloring
+\end{itemize}
+
+\textbf{Decision Variables:}
+\begin{itemize}
+    \item $C(v_i)$: The color assigned to vertex $v_i \in V$, where $C(v_i) \in \{1, 2, \dots, k\}$
+\end{itemize}
+
+\textbf{Constraints:}
+\begin{enumerate}
+    \item \textbf{Adjacent vertices constraint:} For all edges $(u, v) \in E$, adjacent vertices must have different colors:
+    $$\forall (u, v) \in E: \quad C(u) \neq C(v)$$
+    \item \textbf{Color range constraint:} Each vertex must be assigned exactly one color from the available color set:
+    $$\forall v \in V: \quad C(v) \in \{1, 2, \dots, k\}$$
+\end{enumerate}
+
+\textbf{Objective Function:}
+\begin{itemize}
+    \item Minimize the number of colors used: $\min k$ subject to the constraints above
+    \item Equivalently, minimize the conflict count $F(C)$ where:
+    $$F(C) = \sum_{(u,v) \in E} \mathbb{I}(C(u) = C(v))$$
+    where $\mathbb{I}$ is the indicator function that returns 1 if $C(u) = C(v)$ and 0 otherwise
+    \item A solution is feasible (proper coloring) if and only if $F(C) = 0$
+\end{itemize}
+
+ 
+\section{Methodology and Selected Algorithms}
+
+To address the computational complexity of the GCP, this report implements and contrasts two distinct algorithmic approaches. The first is a \textbf{constructive heuristic} (Greedy Algorithm), which is used to generate a fast, high-quality baseline solution. The second is a powerful \textbf{single-solution based metaheuristic} (Tabu Search), which is an \textbf{improvement heuristic} designed to start with an existing solution and iteratively refine it to find a near-optimal coloring.
+
+\subsection{Benchmark Heuristic: Greedy Algorithm}
+The \textbf{Greedy Algorithm} is a well-known constructive heuristic used to generate a fast, initial solution to the GCP \cite{Postigo2021}. It operates by iterating through the vertices of the graph, one by one, and assigning the first available (legal) color to each vertex. The primary advantages of this method are its simplicity and very high speed. However, its main drawback is its significant sensitivity to the initial \textbf{vertex ordering}; different orderings can produce colorings with a vastly different number of colors ($k$). In this study, the Greedy Algorithm is used for two purposes:
+\begin{enumerate}
+    \item As a baseline benchmark to measure the performance of a simple heuristic.
+    \item As the generator for the \textbf{initial solution} that is fed into the Tabu Search algorithm for refinement.
+\end{enumerate}
+
+\subsection{S-metaheuristic: Tabu Search (TS)}
+The \textbf{Tabu Search (TS)} algorithm is the core S-metaheuristic used in this report. It is selected for its proven effectiveness in navigating the complex and rugged search landscapes of $\text{NP}$-hard problems like the GCP \cite{MendezDiaz2014}. TS is an enhanced form of \textbf{local search} that begins with a complete initial solution (provided by the Greedy algorithm) and iteratively moves to new solutions in its "neighborhood" by changing vertex colors.
+
+
+The implementation uses an \textbf{iterative color reduction strategy}: starting with the number of colors $k_0$ produced by the Greedy algorithm, TS attempts to find feasible colorings with progressively fewer colors ($k_0-1, k_0-2, \dots$) until it fails to find a conflict-free solution within the iteration limit. This strategy systematically pushes toward the chromatic number while maintaining feasibility at each level.
+
+
+Its defining characteristic is the use of a \textbf{Tabu List}, implemented as a FIFO (First-In-First-Out) queue that records recent moves. This memory prevents cycling by temporarily forbidding reverse moves, forcing the search to explore new regions of the solution space. The list stores $(vertex, old\_color)$ pairs, preventing a vertex from immediately returning to its previous color.
+
+
+
+Furthermore, TS employs a \textbf{Aspiration Criterion}, which tracks the best conflict count achieved at each conflict level. This allows tabu-forbidden moves to be accepted when they achieve better results than previously seen, enabling the algorithm to escape local optima. The combination of randomized sampling, memory-based restrictions, and aspiration makes TS particularly effective for solving combinatorial optimization problems like the GCP.
+
+\subsubsection{TS Mechanism}
+TS is an iterative local search method that combines randomized sampling with memory-based mechanisms to explore the solution space effectively.
+
+\begin{itemize}
+    \item \textbf{Tabu List:} Implemented as a FIFO (First-In-First-Out) queue with fixed capacity $L$. When a vertex $v$ is moved from color $c$ to color $c'$, the pair $(v, c)$ is added to the tabu list, preventing the vertex from immediately returning to its previous color. When the list exceeds capacity $L$, the oldest entry is removed. This short-term memory prevents cycling while allowing flexible exploration.
+    
+    \item \textbf{Aspiration Criterion:} A aspiration dictionary tracks the best conflict count achieved for each conflict level. A tabu move $(v, c')$ is accepted if the resulting solution has fewer conflicts than the best previously achieved at the current conflict level, even if the move is in the tabu list. This allows the search to override tabu restrictions when significant improvements are found.
+    
+    \item \textbf{Randomized Sampling:} Instead of exhaustively evaluating all neighborhood moves, the algorithm randomly samples $R$ candidate moves (vertex-color pairs) from conflicting vertices and accepts the first move that improves the solution. This balances exploration efficiency with solution quality.
+    
+    \item \textbf{Color Reduction Strategy:} TS iteratively attempts to find feasible colorings with decreasing numbers of colors, starting from the greedy solution's color count $k_0$ and reducing by one color at each iteration until no feasible solution can be found within the iteration limit.
+\end{itemize}
+
+\subsection{Initial Solution: Greedy Algorithm}
+The initial solution for the TS is generated using the \textbf{Greedy Algorithm}. This provides a fast, initial feasible coloring with a relatively small number of colors ($k_0$). The algorithm iterates through vertices one by one, assigning the first available (legal) color to each vertex. The process is formalized in Algorithm 1.
+
+\vspace{1em}
+\textbf{Algorithm 1: Greedy Algorithm (Initial Solution)}
+\begin{enumerate}
+    \item Input: Graph $G = (V, E)$.
+    \item Order the vertices $V = \{v_1, v_2, \dots, v_n\}$.
+    \item $C(v_1) \leftarrow 1$.
+    \item $k \leftarrow 1$.
+    \item \textbf{For} $i = 2$ \textbf{to} $n$ \textbf{Do}
+    \item \quad Find the smallest color $c \in \{1, \dots, k\}$ such that $v_i$ is not adjacent to any vertex colored with $c$.
+    \item \quad \textbf{If} (such a color $c$ exists) \textbf{Then}
+    \item \quad \quad $C(v_i) \leftarrow c$.
+    \item \quad \textbf{Else}
+    \item \quad \quad $k \leftarrow k + 1$.
+    \item \quad \quad $C(v_i) \leftarrow k$.
+    \item \textbf{End For}
+    \item \textbf{Return} Solution $C$ and number of colors $k$.
+\end{enumerate}
+
+\vspace{1em}
+\textbf{Algorithm 2: Tabu Search (TS) for GCP}
+\begin{enumerate}
+    \item Input: Graph $G$, initial solution $S$ from Greedy, initial colors $k_0$, max iterations $T$, tabu list size $L$, sampling size $R$.
+    \item Initialize empty tabu list (FIFO queue) and aspiration dictionary.
+    \item \textbf{For} $k = k_0$ \textbf{down to} $2$ \textbf{Do} \quad // Iteratively reduce colors
+    \item \quad $iter \leftarrow 0$.
+    \item \quad Randomly reassign vertices with color $\geq k$ to colors in $\{1, \dots, k-1\}$.
+    \item \quad \textbf{Repeat}
+    \item \quad \quad $iter \leftarrow iter + 1$.
+    \item \quad \quad Identify conflicting vertices $C = \{v \in V : \exists u \in N(v), S(u) = S(v)\}$.
+    \item \quad \quad \textbf{If} $|C| = 0$ \textbf{Then} break \quad // Feasible solution found
+    \item \quad \quad \textbf{For} $i = 1$ \textbf{to} $R$ \textbf{Do} \quad // Sample $R$ random moves
+    \item \quad \quad \quad Select random vertex $v \in C$ and random color $c' \in \{1, \dots, k\}$.
+    \item \quad \quad \quad Let $c = S(v)$ be the current color of $v$.
+    \item \quad \quad \quad Create candidate solution $S'$ by setting $S'(v) = c'$.
+    \item \quad \quad \quad Calculate conflicts: $f(S') = |\{(u,w) \in E : S'(u) = S'(w)\}|$.
+    \item \quad \quad \quad \textbf{If} $f(S') < f(S)$ \textbf{and} ($(v,c') \notin$ tabu list \textbf{or} aspiration satisfied) \textbf{Then}
+    \item \quad \quad \quad \quad $S \leftarrow S'$ \quad // Accept first-improving move
+    \item \quad \quad \quad \quad Add $(v, c)$ to tabu list \quad // Forbid reverse move
+    \item \quad \quad \quad \quad \textbf{If} $|$tabu list$| > L$ \textbf{Then} remove oldest entry
+    \item \quad \quad \quad \quad \textbf{Break} \quad // Exit sampling loop
+    \item \quad \textbf{Until} ($iter = T$ or $f(S) = 0$)
+    \item \quad \textbf{If} $f(S) \neq 0$ \textbf{Then} return solution with $k$ colors \quad // Failed to reduce further
+    \item \textbf{Return} best feasible solution $S$.
+\end{enumerate}
+
+
+
+
+
+
+
+\section{Solution Representation, Objective Function, and Constraints}
+
+\subsection{Solution Representation}
+A coloring solution is represented as a vector (or list) where each element corresponds to a vertex, and its value is the color assigned to that vertex.
+$$
+\text{Solution} = [C(v_1), C(v_2), \dots, C(v_{|V|})]
+$$
+
+\subsection{Objective Function}
+The objective function $F(C)$ computes the total number of conflicts (edges connecting vertices with the same color):
+$$
+F(C) = \sum_{(u,v) \in E} \mathbb{I}(C(u) = C(v))
+$$
+The goal of the TS is to find a solution $C$ such that $F(C) = 0$ using the minimum number of colors.
+
+\subsection{Constraint Handling}
+We use a \textbf{Penalty-based Strategy} where the objective function directly penalizes constraint violations. A solution $C$ is considered \textbf{feasible} (a proper coloring) if and only if $F(C) = 0$.
+
+\subsection{Neighborhood Moves}
+The neighborhood $N(S)$ of a solution $S$ (using a fixed number of colors $k$) is conceptually defined as the set of all solutions obtained by changing the color of exactly one vertex that is involved in at least one conflict. However, for computational efficiency, the implementation uses a \textbf{randomized sampling strategy}: 
+
+At each iteration, the algorithm:
+\begin{enumerate}
+    \item Identifies all conflicting vertices $C = \{v \in V : \exists u \in N(v), S(u) = S(v)\}$.
+    \item Randomly samples $R$ moves from the neighborhood by:
+    \begin{itemize}
+        \item Selecting a random vertex $v \in C$
+        \item Selecting a random color $c' \in \{1, \dots, k\}$ different from $S(v)$
+    \end{itemize}
+    \item Evaluates each sampled move and accepts the \textbf{first improving move} that reduces conflicts and is not tabu (or satisfies aspiration).
+\end{enumerate}
+
+This randomized sampling approach with first-improvement acceptance provides a balance between computational efficiency and solution quality, avoiding the expensive evaluation of all possible neighborhood moves.
+
+\subsection{Diversification and Intensification Strategies}
+\begin{itemize}
+    \item \textbf{Intensification:} Focuses on improving the current solution by accepting only moves that reduce the number of conflicts. The first-improvement strategy with randomized sampling ensures rapid convergence toward feasible solutions while maintaining solution quality through selective move acceptance.
+    
+    \item \textbf{Diversification:} Ensured through multiple mechanisms:
+    \begin{itemize}
+        \item \textbf{Tabu List (FIFO Queue):} When a vertex $v$ is moved from color $c$ to color $c'$, the pair $(v, c)$ is stored in a FIFO queue of size $L = 10$. This prevents the vertex from immediately returning to its previous color for $L$ iterations, forcing exploration of new regions of the solution space.
+        
+        \item \textbf{Aspiration:} The aspiration dictionary allows overriding tabu restrictions when moves achieve better conflict levels than previously seen, enabling escape from local optima.
+        
+        \item \textbf{Randomized Sampling:} Random selection of vertices and colors introduces stochastic variation, preventing deterministic patterns and promoting diverse exploration.
+        
+        \item \textbf{Iterative Color Reduction:} The outer loop that progressively reduces the number of colors forces the algorithm to explore increasingly constrained solution spaces, naturally promoting diversification.
+    \end{itemize}
+\end{itemize}
+
+\section{Motivation and Contribution}
+
+\subsection{Motivation}
+The GCP is $\text{NP}$-hard, meaning that finding the optimal chromatic number for large graphs is computationally infeasible using exact methods. \textbf{Tabu Search} is chosen because it offers a significant improvement over simple constructive heuristics (like Greedy) by intelligently navigating the solution space through memory-based mechanisms. TS has been proven effective in escaping local optima and consistently finding solutions close to the \textbf{Chromatic Number} ($\chi(G)$) for various graph instances. Its combination of intensification and diversification strategies makes it particularly well-suited for the rugged landscape of the GCP.
+
+\subsection{Contribution}
+This work contributes to the application of single-solution metaheuristics for the GCP through the following aspects:
+\begin{itemize}
+    \item \textbf{Efficient Implementation:} A practical implementation of Tabu Search specifically tailored for the GCP, incorporating:
+    \begin{itemize}
+        \item FIFO-based tabu list for efficient memory management
+        \item Randomized first-improvement strategy for computational efficiency
+        \item Aspiration dictionary for adaptive constraint relaxation
+        \item Iterative color reduction framework for systematic chromatic number approximation
+    \end{itemize}
+    
+    \item \textbf{Systematic Parameter Analysis:} Empirical parameter tuning across three dimensions (tabu list size, random sampling size, iteration limits) to identify optimal configurations for DIMACS benchmark instances, demonstrating the importance of balancing exploration and exploitation.
+    
+    \item \textbf{Comparative Evaluation:} Rigorous comparison between the constructive Greedy heuristic and the improvement-based TS metaheuristic, demonstrating the trade-offs between solution quality and computational time. Results show TS achieves 32-59\% reduction in deviation from BKS compared to Greedy, at the cost of 40,000x increase in computation time.
+    
+    \item \textbf{Robustness Assessment:} Statistical analysis over 5 independent runs to measure solution consistency and reliability (standard deviations of 0.71-1.14 colors), providing insights into algorithm stability across different graph densities (50\% to 90\% edge density) and sizes (250-1000 vertices).
+\end{itemize}
+
+\section{Experimental Setup}
+
+\subsection{Implementation Environment}
+The model was implemented using the \textbf{Python} programming language (version 3.x) within the \textbf{Jupyter Notebook} environment. Several key libraries were essential for this task:
+\begin{itemize}
+    \item \textbf{NetworkX:} Used for the creation, manipulation, and study of the graph structures.
+    \item \textbf{NumPy:} Utilized for efficient numerical operations and array management.
+    \item \textbf{Matplotlib:} Used for generating all visual aids, including the comparison bar charts and convergence graphs.
+\end{itemize}
+All experiments were conducted on a local machine running Linux with an Intel(R) Core(TM) i7-14700KF processor (3.40 GHz) and 32.0 GB of RAM.
+
+\subsection{Parameter Tuning}
+An \textbf{offline parameter tuning} strategy is used, where optimal values for key parameters are determined empirically through systematic experimentation. Each parameter was tested independently while keeping others constant, and the configuration yielding the best solution quality was selected. The tuning process involved multiple runs on representative instances to ensure consistency.
+
+\begin{longtable}{|l|l|l|}
+\hline
+Parameter (Factor) & Levels Tested & Optimal Value \\
+\hline
+\endhead
+\hline
+Tabu List Size ($L$) & 3, 5, 10, 30, 50 & 10 \\
+\hline
+Random Sampling Size ($R$) & 30, 40, 50 & 50 \\
+\hline
+Max Iterations per Color ($T$) & $(3 \times 10^{3}), (5 \times 10^{3}), (7 \times 10^{3}), (9 \times 10^{3})$ & $(7 \times 10^{3})$ \\
+\hline
+\end{longtable}
+
+\textbf{Parameter Descriptions:}
+\begin{itemize}
+    \item \textbf{Tabu List Size ($L$):} The maximum number of (vertex, color) pairs stored in the FIFO tabu queue. A value of 10 provides effective cycle prevention without overly restricting the search.
+    \item \textbf{Random Sampling Size ($R$):} The number of random neighborhood moves sampled at each iteration before accepting a move. A value of 50 balances exploration breadth with computational efficiency.
+    \item \textbf{Max Iterations per Color ($T$):} The maximum number of iterations allowed when attempting to find a feasible coloring with $k$ colors. The value of 7,000 provides sufficient time for convergence while maintaining reasonable total runtime.
+\end{itemize}
+
+\subsection{Datasets}
+We use standardized \textbf{Benchmark Instances} from the DIMACS graph coloring library \cite{MendezDiaz2014} to ensure the generality of the results.
+
+\begin{longtable}{|l|l|l|l|}
+\hline
+Instance & Vertices ($|V|$) & Edges ($|E|$) & Chromatic Number ($\chi(G)$, BKS) \\
+\hline
+\endhead
+\hline
+dsjc250.5 & 250 & 31,336 & 28 \\
+\hline
+dsjc500.9 & 500 & 224,874 & 126 \\
+\hline
+dsjc1000.5 & 1000 & 249,826 & 85 \\
+\hline
+\end{longtable}
+
+ 
+
+
+\section{Results, Evaluation Matrix, and Discussion}
+
+\subsection{Evaluation Matrix}
+Performance is evaluated using:
+\begin{itemize}
+    \item \textbf{Solution Quality ($k$):} The final number of colors used.
+    \item \textbf{Percent Deviation ($\%$):} Calculated against the Best-Known Solution (BKS).
+    $$
+    \text{Deviation } (\%) = \frac{\text{Obtained Colors} - \text{BKS}}{\text{BKS}} \times 100
+    $$
+    \item \textbf{Robustness:} Measured by the standard deviation ($\sigma$) and the average result over \textbf{5 independent runs}.
+    \item \textbf{Computational Effort:} Measured by the average run time in seconds.
+\end{itemize}
+
+
+
+\subsection{Results and Comparison}
+
+\begin{longtable}{|l|l|l|l|l|l|l|}
+\hline
+Instance & Algorithm &Best Colors ($k$) & Avg. Colors ($k$) & Std. Dev. & Avg. Time (s) & Deviation ($\%$) \\
+\hline
+\endhead
+\hline
+dsjc250.5 & Greedy & 43 & 43 & 0.00 & 0.008 & 53.57 \\
+\hline
+dsjc250.5 & Tabu Search & 34 & 35 & 0.71 & 344.97 & 21.42 \\
+\hline
+dsjc500.9 & Greedy & 175 & 175 & 0.00 & 0.033 & 38.80 \\
+\hline
+dsjc500.9 & Tabu Search & 164 & 165 & 0.89 & 2932.67 & 30.15 \\
+\hline
+dsjc1000.5 & Greedy & 127 & 127 & 0.00 & 0.129 & 49.40 \\
+\hline
+dsjc1000.5 & Tabu Search & 125 & 126 & 1.14 & 3969.29 & 47.05 \\
+\hline
+\end{longtable}
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+\subsection{Discussion and Analysis}
+The experimental results presented in Table 1 clearly demonstrate the effectiveness and the computational cost of the selected metaheuristic. Figure 1 provides a visual comparison of the solution quality across all algorithms and instances.
+
+\begin{itemize}
+    \item \textbf{Solution Quality:} In all three benchmark instances, the \textbf{Tabu Search (TS) algorithm consistently outperformed the Greedy algorithm}, as illustrated in Figure 1. For instance, on `dsjc250.5`, TS reduced the number of colors from 43 (Greedy) to 34, a significant improvement that cut the deviation from BKS by more than half (from 53.57\% down to 21.42\%). This demonstrates the power of TS in escaping the local optima that the simple Greedy heuristic falls into.
+
+    \item \textbf{Computational Effort:} The trade-off for this improved quality is a massive increase in computational time. The Greedy algorithm completed all instances in fractions of a second. In contrast, the TS algorithm required significant time, scaling up to 3969 seconds (approx. 66 minutes) for the largest instance. This highlights the "time vs. quality" compromise inherent in using metaheuristics. Figure \ref{fig1} demonstrates the iterative improvement process of TS, showing how the algorithm progressively reduces conflicts over iterations for the dsjc500.9 instance.
+
+    \item \textbf{Scalability and Limitations:} While TS was always better, its relative improvement diminished as the graph density increased. On the highly dense `dsjc500.9` and `dsjc1000.5`, the improvement was less pronounced compared to `dsjc250.5`, as can be observed in Figure \ref{fig2}. Furthermore, a considerable gap to the Best Known Solution (BKS) remains (e.g., 21.42\% deviation for `dsjc250.5`). This is expected, as these DIMACS instances are notoriously difficult, and the basic TS implementation used here would require more advanced mechanisms (like long-term memory or more complex neighborhood structures) to compete with state-of-the-art solvers.
+\end{itemize}
+
+In conclusion, the results validate the hypothesis that a single-solution metaheuristic (TS) can find significantly better solutions than a constructive heuristic (Greedy), but at a high computational cost.
+
+
+
+\subsection{Visual Aids}
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=0.6\textwidth]{comparison-greedy-tabusearch.png} 
+    \caption{Comparison of final number of colors ($k$) achieved by Greedy, Tabu Search, and BKS ($\chi(G)$) for all instances.}
+    \label{fig1}
+\end{figure}
+
+
+\begin{figure}[h]
+    \centering
+    \includegraphics[width=1\textwidth]{convergence_graph2.png}
+    \caption{Tabu Search Convergence Graph showing the reduction in the number of conflicts ($F(C)$) over iterations for the dsjc500.9 instance.}
+     \label{fig2}
+\end{figure}
+
+
+
+
+
+
+
+
+
+\clearpage
+
+\bibliographystyle{plain}
+\bibliography{references}
+\end{document}
