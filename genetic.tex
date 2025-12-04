@@ -1,0 +1,317 @@
+\documentclass[12pt,a4paper]{article}
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{hyperref}
+\usepackage{booktabs}
+\usepackage{geometry}
+\geometry{margin=1in}
+
+\title{Advanced Genetic Algorithm Design for Combinatorial Optimization: A Study of Assignment, Location, and Set Problems}
+\author{}
+\date{December 5, 2025}
+
+\begin{document}
+
+\maketitle
+
+\section{Foundational Concepts in Evolutionary Computation and Genetic Algorithms}
+
+The successful application of Genetic Algorithms (GAs) to solve complex optimization challenges necessitates a rigorous definition of the underlying evolutionary components, specifically focusing on representation, fitness evaluation, and operator design.
+
+\subsection{Chromosomal Representation, Genes, and Alleles}
+
+In the framework of Evolutionary Algorithms (EAs), a potential solution to an optimization problem is codified as a \textit{chromosome}, often referred to as the genotype. The variables that constitute this solution are termed \textit{genes}, and their possible values are known as \textit{alleles}. The specific position of a gene within the chromosome sequence is designated the \textit{locus}.
+
+The evaluation of a candidate solution's quality is handled by the objective function, which, in EA terminology, is commonly called the \textit{fitness function}. The evolutionary process is driven by \textit{selection pressure}, which biases the choice of parents toward individuals exhibiting higher fitness. Selection strategies include Proportional Fitness Assignment, which utilizes the absolute fitness value, and Rank-Based Fitness Assignment, which uses the relative rank of an individual within the population. Common selection mechanisms designed to implement this pressure include:
+
+\textbf{Roulette Wheel Selection}: This strategy assigns a probability of selection $p_i$ to each individual proportional to its relative fitness: $p_{i}=f_{i}/(\sum_{j=1}^{n}f_{j})$. However, exceptionally fit individuals may introduce bias early in the search, potentially leading to premature convergence.
+
+\textbf{Stochastic Universal Sampling (SUS)}: Developed to mitigate the bias of the Roulette Wheel, SUS uses equally spaced pointers on the fitness wheel, allowing for the simultaneous selection of $\mu$ individuals in a single spin, which helps maintain population diversity.
+
+\textbf{Tournament Selection}: This robust strategy involves randomly selecting $k$ individuals (the tournament size) and choosing the best among them as the parent. The procedure is repeated $\mu$ times to select the required number of parents.
+
+\subsection{The Critical Role of Operator Constraints: Validity, Heritability, and Locality}
+
+The effectiveness of reproduction operators—mutation (unary) and crossover (binary)—is contingent upon their ability to maintain crucial characteristics of the search space.
+
+\textbf{Validity}: Operators must strive to produce valid (feasible) solutions. This is particularly challenging for constrained optimization problems, often necessitating specialized operators or external repair mechanisms.
+
+\textbf{Heritability}: The crossover operator must successfully transmit genetic material from both parents. An operator is deemed \textit{respectful} if common decisions shared by both parents are preserved in the offspring. It is \textit{assorting} if the distance $d$ between the parent and the offspring is less than or equal to the distance between the parents themselves, satisfying $d(p_{1},o)\le d(p_{1},p_{2})$.
+
+\textbf{Locality}: Locality ensures that minimal changes in the genotype (the encoded solution) result in minimal changes in the phenotype (the solution quality). Poor adherence to this principle, known as weak locality, results in highly disruptive mutations or crossovers that generate low-quality solutions from high-quality parents, potentially making the search inefficient.
+
+\section{Comprehensive Analysis of Genetic Crossover Operators and Child Extraction}
+
+Crossover operators are differentiated by the data representation they manipulate. While standard methods suffice for binary or discrete representations, permutation-based problems require specialized operators to ensure solution validity.
+
+\subsection{Standard Crossover Mechanisms (Binary and Discrete Representations)}
+
+Standard crossovers, such as $n$-point and uniform crossover, are typically applied to chromosomes represented by binary strings or discrete value vectors, where the position of an allele does not necessarily impose strict ordering constraints (e.g., in facility selection vectors).
+
+\subsubsection{1-Point, 2-Point, and N-Point Crossover}
+
+These methods define crossover sites that dictate where the exchange of genetic material occurs. For 1-point crossover, a single site is randomly selected.
+
+\textbf{Child Extraction Example (1-Point Crossover)}:
+
+If Parent 1 (P1) is 100111001001 and Parent 2 (P2) is 011100100111, and the crossover site is after the 9th bit:
+\begin{itemize}
+\item P1 Head: 100111001 | P1 Tail: 001
+\item P2 Head: 011100100 | P2 Tail: 111
+\item Offspring 1 (O1): P1 Head + P2 Tail $\to$ 100111001111
+\item Offspring 2 (O2): P2 Head + P1 Tail $\to$ 011100100001
+\end{itemize}
+
+\subsubsection{Uniform Crossover (U-X)}
+
+Uniform crossover achieves maximum mixing by selecting the source parent for each element (gene) independently and randomly, often guided by a binary mask.
+
+\textbf{Child Extraction Example (Uniform Crossover)}:
+If P1 is 100111000111 and P2 is 011000111000, the offspring inherits each gene randomly from either parent, maximizing disruption but potentially combining distant beneficial features.
+
+\subsection{Specialized Crossover Operators for Permutation Problems}
+
+When the chromosome represents a permutation (e.g., the assignment order in QAP), standard crossover fails because it produces illegal solutions containing duplicates and missing elements. Specialized permutation operators are mandatory to maintain feasibility.
+
+\subsubsection{Order Crossover (OX)}
+
+Order Crossover (OX) preserves a contiguous section of the first parent and maintains the relative ordering of the remaining elements from the second parent.
+
+\textbf{Child Extraction Example (Order Crossover)}:
+\begin{itemize}
+\item P1: (A B C D E F G H I). Two crossover points are randomly selected (e.g., delimiting CDEF).
+\item P2: (C D E F b g h a i).
+\item The selected segment from P1 (CDEF) is copied directly to the offspring's segment.
+\item The elements remaining in P2, relative to the copied segment, are determined (bghai).
+\item These remaining elements are inserted into the empty positions of the offspring, starting after the copied section and wrapping around to the beginning, preserving their relative order from P2.
+\item Offspring: (a i C D E F b g h)
+\end{itemize}
+
+\subsubsection{Partially Matched Crossover (PMX)}
+
+PMX uses a matching section to establish a positional mapping that resolves conflicts arising from copying genes from both parents, ensuring the resulting chromosome remains a valid permutation.
+
+\textbf{Child Extraction Example (PMX)}:
+\begin{itemize}
+\item P1: 984 | 567 | 132 10
+\item P2: 871 | 2310 | 9546
+\item A matching section (e.g., sites 4-6) is selected. The segments are copied: O1 receives 567; O2 receives 2310.
+\item A positional mapping is established based on the copied segments: $5 \leftrightarrow 2$, $6 \leftrightarrow 3$, $7 \leftrightarrow 10$.
+\item External elements are copied from the opposite parent. Conflicts arise if an element copied from the external section of P2 duplicates an element already placed in O1, necessitating the use of the defined mapping to find an available position.
+\item The resulting child 1 is 98423101657.
+\end{itemize}
+
+It is important to note that while these specialized operators guarantee validity for permutation problems, the intricate nature of the mapping and re-insertion steps (as seen in PMX and OX) can be highly disruptive, meaning that a small change in parental input can lead to a large rearrangement in the offspring. This structural observation suggests that even structurally correct permutation operators can exhibit weak locality, necessitating the combination of GAs with local search procedures to refine the highly diversified, yet feasible, solutions they produce.
+
+\begin{table}[ht]
+\centering
+\caption{Comparison of Core Crossover Operators}
+\begin{tabular}{lllll}
+\toprule
+\textbf{Operator Type} & \textbf{Representation} & \textbf{Core Mechanism} & \textbf{Feasibility Maintenance} & \textbf{Disruptiveness/Locality} \\
+\midrule
+1-Point/N-Point & Binary/Discrete & Segmental exchange based on cut points & High (for unconstrained representations) & Moderate structural block inheritance \\
+Uniform Crossover & Binary/Discrete & Gene-by-gene source selection (mask) & High (for unconstrained representations) & High; low structural block inheritance \\
+Order Crossover (OX) & Permutation & Preserve P1 segment; maintain P2 relative order & Always guaranteed (valid permutation) & High (due to re-ordering of remaining elements) \\
+PMX & Permutation & Mapping based on matching section & Always guaranteed (valid permutation) & High (due to positional conflict resolution) \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\section{GA Application to Assignment and Location Problems}
+
+\subsection{The Quadratic Assignment Problem (QAP)}
+
+\subsubsection{Problem Explanation and Common Applications}
+
+The Quadratic Assignment Problem (QAP) is a foundational, NP-hard combinatorial optimization problem categorized under facility location problems. It involves assigning $n$ facilities to $n$ unique locations. The cost function is defined by two input matrices: a distance matrix $D$ between locations and a flow (or weight) matrix $W$ representing the interaction between facilities. The goal is to find an assignment (a permutation $\pi$) that minimizes the total sum of the product of flow and distance for all pairs of facilities.
+
+The cost function is inherently quadratic because it relies on the product of two binary assignment decisions, $x_{ij}x_{kl}$, defining the cost structure. Common applications include optimizing the layout of industrial facilities (minimizing material handling costs), scheduling, and electronic chip design.
+
+\subsubsection{Solution Representation, Objective Function, Crossover, and Mutation}
+
+\textbf{Solution Representation}: QAP is naturally represented using permutation encoding. A chromosome of length $n$ represents the assignment, where the $i$-th gene indicates the facility assigned to location $i$.
+
+\textbf{Objective Function (Fitness)}: The fitness function is the direct minimization of the total assignment cost:
+
+\begin{equation}
+\text{Minimize } C(\pi) = \sum_{a, b} w(a, b) \cdot d(\pi(a), \pi(b))
+\end{equation}
+
+where $w(a, b)$ is the flow between facilities $a$ and $b$, and $d(\pi(a), \pi(b))$ is the distance between their assigned locations.
+
+\textbf{Crossover and Mutation}: Since the solution must be a valid permutation, standard crossover operators are inadequate. The GA must employ permutation-specific operators such as Order Crossover (OX) or Partially Matched Crossover (PMX), as these mechanisms are designed to preserve validity. Mutation often involves permutation operators like swapping, inversion, or insertion (related to 2-opt local search).
+
+\textbf{Solving QAP with GA}: Due to the difficulty and size of QAP instances (up to $n=729$ in some studies), highly effective solutions are usually achieved through Hybrid Genetic Algorithms (HGAs). These HGAs couple the GA's global search capability with powerful local search procedures (e.g., Tabu Search) to efficiently balance diversification and intensification, enabling the discovery of (pseudo-)optimal solutions for small- and medium-sized instances.
+
+\subsection{The Facility Location Problem (FLP)}
+
+\subsubsection{Problem Explanation and Common Applications}
+
+The Facility Location Problem (FLP) encompasses several models, such as the $p$-median problem, where the objective is to determine the optimal subset of locations (facilities) to open to serve a set of demand nodes. Unlike QAP, FLP costs typically stem from the service distance between the selected facilities and the external demand, rather than the interaction between facilities themselves. The Uncapacitated Facility Location Problem (UFLP) is a common variant.
+
+Applications are diverse, including determining optimal locations for warehouses in supply chains, locating temporary medical centers during disaster response, and placing utility infrastructure like communication network switches or logistics terminals.
+
+\subsubsection{Solution Representation, Objective Function, Crossover, and Mutation}
+
+\textbf{Solution Representation}: FLP, especially the $p$-median and UFLP variants, is commonly represented by a binary string or direct value coding. A chromosome of length $n$ (the number of potential locations) uses a binary allele $x_j \in \{0, 1\}$ to indicate whether a facility is opened at location $j$ ($x_j=1$).
+
+\textbf{Objective Function (Fitness)}: The fitness function directly minimizes the total cost, which usually includes the fixed costs of opening the chosen facilities plus the variable costs of serving all demand from the nearest open facility.
+
+\textbf{Crossover and Mutation}: Since the chromosome is a binary/discrete vector, standard operators are effective. Studies have shown that the two-point crossover operator, and variations that randomly alternate between one-point and two-point crossover, perform well for FLP representations. Mutation involves flipping a gene (changing $0$ to $1$ or vice versa), representing the opening or closing of a potential site.
+
+\textbf{Constraint Handling}: If the specific FLP variant includes constraints, such as the $p$-median constraint requiring exactly $p$ facilities to be open, the GA must include mechanisms (penalties or repair procedures) to ensure $|X|=p$.
+
+\section{GA Application to Set Problems: Covering and Partitioning}
+
+The Set Problems (SCP and SPP) represent highly constrained resource allocation models that challenge GA feasibility maintenance, leading to the adoption of hybridized and indirect approaches.
+
+\subsection{The Set Covering Problem (SCP)}
+
+\subsubsection{Problem Explanation and Common Applications}
+
+The Set Covering Problem (SCP) involves selecting a subset of columns (resources) from a matrix such that every row (requirement) is covered by at least one selected column, while minimizing the total cost of the selected columns.
+
+\textbf{ILP Formulation}: The constraint is an inequality requiring coverage: $\sum_{j=1}^{n} a_{ij} x_j \ge 1$ for all rows $i$.
+
+\textbf{Structure}: SCP allows for redundancy; a row can be covered multiple times. This is key to differentiating it from SPP. SCP is strongly NP-hard.
+
+\textbf{Applications}: SCP is typically used in resource allocation and discrete location models where complete coverage is mandatory and cost must be minimized, such as locating facilities where capacity is not a factor and all demand nodes must be served within a given distance.
+
+\subsubsection{Solution Representation, Objective Function, Crossover, and Mutation}
+
+\textbf{Solution Representation}: SCP is formally solved using a binary solution vector $x_j$, but applying standard GA operators directly to this binary vector often yields uncovered rows (infeasible solutions). Consequently, many high-performing GAs for SCP utilize an Indirect Genetic Algorithm approach. The chromosome in the indirect GA does not represent the solution itself but rather a permutation of solution variables or a parameter set that guides an external decoder.
+
+\textbf{Objective Function (Fitness)}: The objective is cost minimization, $\text{Minimize } \sum c_j x_j$. Since the GA generates abstract genotypes, the fitness is evaluated after the genotype has been translated into a feasible binary solution (phenotype) by the decoder.
+
+\textbf{Crossover and Mutation}: The operators act on the permutation encoding (or other indirect encoding). Robust permutation operators like the permutation uniform-like crossover (PUX) are commonly employed. Mutation might involve a simple swap operator on the permutation.
+
+\textbf{Decoder and Repair}: The crucial component is the external decoder, which converts the (potentially invalid) genotype into a feasible solution using specialized greedy heuristics, such as DROP and ADD procedures. The ADD procedure works by iteratively adding columns to cover rows that currently lack coverage, while the DROP procedure removes redundant columns if doing so does not violate the $\ge 1$ coverage constraint. This decoupling allows the GA to focus on exploring exploitable search regions, while the local search component handles the constraint rigidity.
+
+\subsection{The Set Partitioning Problem (SPP)}
+
+\subsubsection{Problem Explanation and Common Applications}
+
+The Set Partitioning Problem (SPP) is the most constrained of the set problems. It requires finding a subset of columns that covers every row exactly once.
+
+\textbf{ILP Formulation}: The defining constraint is the equality constraint: $\sum_{j=1}^{n} a_{ij} x_j = 1$ for all rows $i$.
+
+\textbf{Challenge}: The requirement that every row be covered by exactly one column makes the SPP search space exceptionally tight and difficult to navigate. Initial feasible solutions are often hard or impossible to construct, and standard GA operators are highly likely to generate infeasible solutions.
+
+\textbf{Applications}: Classical SPP applications include airline crew scheduling (where flight segments must be partitioned exactly into crew routes) and vehicle routing, where resource assignments must be non-overlapping.
+
+\subsubsection{Solution Representation, Objective Function, Crossover, and Mutation}
+
+\textbf{Solution Representation}: SPP is solved using a direct bit string representation corresponding to the binary decision variables $x_j$.
+
+\textbf{Crossover and Mutation}: Standard binary crossovers (One-Point, Two-Point, Uniform) are used, but their application frequently produces infeasible strings, requiring sophisticated constraint handling.
+
+\textbf{Augmented Objective Function (Constraint Handling)}: Since the constraints are so strict, GAs for SPP typically employ an augmented evaluation function that explicitly incorporates penalties for infeasibility, allowing the search to proceed through the infeasible space while being guided toward feasibility.
+
+\begin{equation}
+f(x) = c(x) + \lambda p(x)
+\end{equation}
+
+where $c(x)$ is the objective cost, $p(x)$ is the penalty term quantifying constraint violation, and $\lambda$ is a dynamic scalar multiplier.
+
+Three penalty approaches for $p(x)$ are investigated:
+\begin{itemize}
+\item \textbf{Countinfz Penalty}: Measures only whether constraint $i$ is violated, using $i(x) \in \{0, 1\}$.
+\item \textbf{Linear Penalty}: Measures the magnitude of the constraint violation: $p(x) = \sum_{i=1}^{m} \lambda_i \sum_{j=1}^{n} |a_{ij} x_j - 1|$.
+\item \textbf{ST Penalty}: A dynamic penalty term that utilizes the difference between the best feasible solution found ($z_{feas}$) and the best overall solution found ($z_{best}$). This function is specifically designed to ``favor solutions which are near a feasible solution over more highly-fit solutions which are far from any feasible solution,'' indicating a search strategy that prioritizes proximity to the feasible boundary.
+\end{itemize}
+
+The constraint tightness of SPP means that, unlike QAP (where structural validity is maintained) or SCP (where feasibility is externalized), the SPP GA must be coupled with specialized local search heuristics (like the ROW Heuristic) to repair and refine the strings generated by the standard GA operators, ensuring the population remains competitive in regions near the strict feasibility constraint. The dynamic adjustment of the penalty term demonstrates that effective constraint handling for SPP necessitates an adaptive approach tailored to the real-time progress of the search.
+
+\section{Comparative Structural Analysis and Application Differentiation}
+
+The four problems—QAP, FLP, SCP, and SPP—are classic combinatorial optimization problems, yet their underlying mathematical structure and the resulting requirements for GA design differ fundamentally.
+
+\subsection{Similarities and Distinctions in Problem Formulation}
+
+QAP and FLP are facility location problems, while SCP and SPP are set covering models.
+
+\subsubsection{Similarities}
+
+All four problems are generally classified as NP-hard combinatorial optimization problems, meaning that as instance size grows, solution complexity increases exponentially. They all involve discrete decisions (assignment or selection) and minimizing a cost function.
+
+\subsubsection{Structural Distinctions and GA Strategy Mapping}
+
+The primary distinction lies in the nature of the objective function (quadratic vs. linear) and the type of constraint (permutation vs. selection vs. covering vs. partitioning).
+
+\begin{table}[ht]
+\centering
+\caption{Comparative Analysis of Combinatorial Problems and GA Strategy}
+\begin{tabular}{lllll}
+\toprule
+\textbf{Problem} & \textbf{Objective Function Type} & \textbf{Core Constraint Type} & \textbf{Primary GA Encoding} & \textbf{Feasibility Strategy} \\
+\midrule
+QAP & Quadratic Minimization & Assignment (Permutation) & Permutation & Internal structural maintenance (OX, PMX) \\
+FLP (P-Median) & Linear Minimization & Selection ($|X|=p$) & Binary/Discrete & Standard operators with constraint repair \\
+SCP & Linear Minimization & Coverage ($\ge 1$) & Indirect (Permutation) & External Decoder/Repair (DROP/ADD) \\
+SPP & Linear Minimization & Partitioning ($= 1$) & Direct Binary String & Augmented Fitness Function (Adaptive Penalties) + Local Search \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+The required complexity of the GA strategy directly correlates with the severity of the constraint imposed by the problem formulation. The QAP constraint, being structural (a permutation), is solved by operators that are structurally correct. The SCP constraint ($\ge 1$) is loose enough that feasibility can be corrected externally by a local search decoder. In contrast, the rigid SPP constraint ($= 1$) cannot be easily maintained or repaired, forcing the GA to incorporate feasibility management directly into the search mechanism via sophisticated, adaptive penalty functions.
+
+\subsection{Differentiating Confusing Applications}
+
+Confusion often arises between facility location models (QAP and FLP) and between the set problems (SCP and SPP). Differentiation relies on examining the cost source and the strictness of the resource allocation constraint.
+
+\subsubsection{QAP vs. FLP Differentiation}
+
+These problems are often confused as they both involve location. The critical distinction is the source of the cost:
+
+\begin{itemize}
+\item \textbf{QAP}: Cost is derived from internal interaction between the assigned entities (facilities). The minimization goal is to place highly interactive pairs close together. It requires $n$ facilities assigned to $n$ locations (one-to-one mapping).
+\item \textbf{FLP}: Cost is derived from external service to demand nodes (customers). The minimization goal is the weighted distance between a selected subset of facilities and all demand points.
+\end{itemize}
+
+If the application asks to minimize flow costs between objects being placed, it is QAP; if it asks to minimize service costs from placed objects to external customers, it is FLP.
+
+\subsubsection{SCP vs. SPP Differentiation}
+
+Both problems use linear costs and binary selection variables, but the equality versus inequality constraint is determinative.
+
+\begin{itemize}
+\item \textbf{SCP ($\ge 1$)}: Used when robustness and redundancy are acceptable or necessary. A fire station assignment, for example, is usually modeled as SCP because having two stations cover the same area is acceptable, provided all areas are covered.
+\item \textbf{SPP ($= 1$)}: Used when exact allocation and non-overlap are mandatory. Crew scheduling, where a specific flight segment must be covered by precisely one crew, is a canonical SPP application. Over-coverage is an infeasibility.
+\end{itemize}
+
+The differing constraint strictness mandates dramatically different GA approaches: the flexible coverage ($\ge 1$) of SCP allows for efficient indirect optimization and repair, whereas the inflexible partition ($= 1$) of SPP compels the GA to directly grapple with the complex infeasible space through dynamic penalty landscapes and hybridized local search.
+
+\section{Conclusions}
+
+This analysis demonstrates that the effective design of a Genetic Algorithm is intrinsically linked to the mathematical structure and constraint rigidity of the target combinatorial optimization problem.
+
+\textbf{Crossover Mechanisms}: Permutation-based problems like QAP necessitate specialized operators (OX, PMX) to maintain internal solution validity. Although these operators ensure feasibility, the complexity of their mapping mechanisms implies a potential trade-off with solution locality, often requiring hybridization with local search (e.g., Tabu Search) to achieve competitive performance for difficult instances.
+
+\textbf{Feasibility Management}: The method for handling constraints must evolve with the constraint's complexity. FLP, with its simple selection constraint, utilizes standard binary operators. SCP, allowing over-coverage ($\ge 1$), benefits significantly from an Indirect GA where an external decoder handles the repair. Conversely, SPP, defined by the highly restrictive exact partition constraint ($= 1$), requires the search mechanism itself to be modified via augmented objective functions and adaptive penalties (such as the ST Penalty) to successfully navigate and exploit the narrow feasible boundary.
+
+\textbf{Application Mapping}: Real-world problem classification is achieved by evaluating the source of the objective cost (internal interaction in QAP vs. external service in FLP) and the acceptable level of resource allocation overlap (redundancy in SCP vs. exact partition in SPP). The structural differences inherent in these four canonical problems provide a roadmap for selecting the appropriate GA encoding, crossover operator, and constraint handling strategy.
+
+\section*{Works Cited}
+
+\begin{enumerate}
+\item P-metaheuristics\_2.pdf
+\item Genetic Algorithm For Solving The Uncapacitated Facility ... - IJERT, accessed December 5, 2025, \url{https://www.ijert.org/research/genetic-algorithm-for-solving-the-uncapacitated-facility-location-problem-IJERTV2IS3589.pdf}
+\item An Improved Hybrid Genetic-Hierarchical Algorithm for the Quadratic Assignment Problem, accessed December 5, 2025, \url{https://www.mdpi.com/2227-7390/12/23/3726}
+\item Quadratic assignment problem - Wikipedia, accessed December 5, 2025, \url{https://en.wikipedia.org/wiki/Quadratic_assignment_problem}
+\item The Quadratic Assignment Problem | Request PDF - ResearchGate, accessed December 5, 2025, \url{https://www.researchgate.net/publication/281601184_The_Quadratic_Assignment_Problem}
+\item A Genetic Algorithm for solving Quadratic Assignment ... - arXiv, accessed December 5, 2025, \url{https://arxiv.org/pdf/1405.5050}
+\item Comparative analysis of genetic crossover operators for the p-median facility location problem | Erdogmus | Selcuk University Journal of Engineering Sciences, accessed December 5, 2025, \url{https://sujes.selcuk.edu.tr/sujes/article/view/587}
+\item IEOR 151 – Lecture 15 Set Covering Problem, accessed December 5, 2025, \url{https://aswani.ieor.berkeley.edu/teaching/FA16/151/lecture_notes/ieor151_lec15.pdf}
+\item A Unified Framework for Combinatorial Optimization Based on Graph Neural Networks, accessed December 5, 2025, \url{https://arxiv.org/html/2406.13125v1}
+\item NAVAL POSTGRADUATE SCHOOL, accessed December 5, 2025, \url{https://www.hsdl.org/c/view?docid=732164}
+\item An indirect genetic algorithm for set covering problems - Semantic Scholar, accessed December 5, 2025, \url{https://www.semanticscholar.org/paper/An-indirect-genetic-algorithm-for-set-covering-Aickelin/3dba217c869901b833745d0acd27efc0f40f68ff}
+\item [0803.2965] An Indirect Genetic Algorithm for Set Covering Problems - arXiv, accessed December 5, 2025, \url{https://arxiv.org/abs/0803.2965}
+\item An Indirect Genetic Algorithm for Set Covering Problems - arXiv, accessed December 5, 2025, \url{https://arxiv.org/pdf/0803.2965}
+\item Constraint Handling in Genetic Algorithms: The Set Partitioning Problem, accessed December 5, 2025, \url{https://glvee.github.io/files/chu98.pdf}
+\item A Parallel Genetic Algorithm for the Set Partitioning Problem, accessed December 5, 2025, \url{https://ftp.mcs.anl.gov/pub/tech_reports/reports/ANL9423.pdf}
+\end{enumerate}
+
+\end{document}
