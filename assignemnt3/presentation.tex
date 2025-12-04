@@ -1,0 +1,501 @@
+\documentclass{beamer}
+\usetheme{Madrid}
+\usecolortheme{default}
+
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{multirow}
+\usepackage{algorithm}
+\usepackage{algorithmic}
+
+% Define comment style for algorithmic
+\renewcommand{\algorithmiccomment}[1]{\hfill$\triangleright$ \textit{#1}}
+
+% Remove navigation symbols
+\setbeamertemplate{navigation symbols}{}
+
+% Define argmin operator
+\DeclareMathOperator*{\argmin}{arg\,min}
+
+% Title page information
+\title[ACO for Graph Coloring]{Ant Colony Optimization for Graph Coloring Problem}
+\subtitle{Population-based Metaheuristic}
+\author[]{Mohammed Edris Mahdy (446910613) \\ Mohammed Ahmed Ewida (446910614) \\ \vspace{0.5cm} \textit{Under the Supervision of:} \\ Prof. Manar Hosny}
+\institute[KSU]{King Saud University \\ College of Computer and Information Sciences \\ Department of Computer Science}
+\date{December 7, 2025}
+
+\begin{document}
+
+% Title slide
+\begin{frame}
+\titlepage
+\vspace{-0.5cm}
+\begin{center}
+\includegraphics[width=0.25\textwidth]{figures/KSU_Logo.png}
+\end{center}
+\end{frame}
+
+% Outline
+\begin{frame}{Outline}
+\tableofcontents
+\end{frame}
+
+% Section 1: Problem Statement
+\section{Problem Statement}
+
+\begin{frame}{Graph Coloring Problem (GCP)}
+\begin{block}{Formal Definition}
+Given an undirected graph $G = (V, E)$, find a $k$-coloring function $C : V \to \{1, 2, \dots, k\}$ such that:
+\begin{itemize}
+    \item $\forall (u, v) \in E: C(u) \neq C(v)$ (adjacent vertices have different colors)
+    \item Minimize $k = \chi(G)$ (chromatic number)
+\end{itemize}
+\end{block}
+
+\begin{block}{Objective Function}
+$$\text{Minimize } k \quad \text{subject to} \quad F(C) = \sum_{(u,v) \in E} \mathbb{I}(C(u) = C(v)) = 0$$
+\end{block}
+
+\vspace{0.3cm}
+\textbf{Challenge:} NP-hard problem - exact methods infeasible for large graphs
+\end{frame}
+
+% Section 2: Methodology
+\section{Methodology: ACO P-Metaheuristic}
+
+\begin{frame}{Why Ant Colony Optimization?}
+\textbf{ACO Key Advantages:}
+\begin{itemize}
+    \item \textbf{Constructive Approach:} Builds solutions from scratch (no initial solution dependency)
+    \item \textbf{Collective Intelligence:} Multiple ants explore solution space in parallel
+    \item \textbf{Adaptive Learning:} Pheromone-based memory guides search
+    \item \textbf{Balanced Exploration-Exploitation:} Natural probabilistic mechanisms
+    \item \textbf{Flexibility:} Adapts to different problem structures
+\end{itemize}
+
+\vspace{0.5cm}
+\textbf{Population-based Metaheuristic:}
+\begin{itemize}
+    \item Multiple solutions per iteration increase diversity
+    \item Parallel execution leverages multi-core processors
+    \item Collective experience accumulates over iterations
+\end{itemize}
+\end{frame}
+
+\begin{frame}{ACO Mechanism Overview}
+\begin{columns}
+\column{0.5\textwidth}
+\textbf{Key Components:}
+\begin{enumerate}
+    \item Pheromone Matrix $\tau[v][c]$
+    \item Heuristic Information $\eta[c]$
+    \item Probabilistic Selection
+    \item Pheromone Update
+\end{enumerate}
+
+\vspace{0.5cm}
+\textbf{Probability Formula:}
+$$P(c) = \frac{[\tau[v][c]]^{\alpha} \cdot [\eta[c]]^{\beta}}{\sum_{c'} [\tau[v][c']]^{\alpha} \cdot [\eta[c']]^{\beta}}$$
+
+\column{0.5\textwidth}
+\textbf{Parameters:}
+\begin{itemize}
+    \item $\alpha$: Pheromone importance
+    \item $\beta$: Heuristic importance
+    \item $\rho$: Evaporation rate
+    \item $m$: Number of ants
+    \item $Q$: Pheromone deposit
+\end{itemize}
+
+\vspace{0.3cm}
+\textbf{Parallel Execution:}
+\begin{itemize}
+    \item 82 ants per iteration
+    \item Multi-threading
+\end{itemize}
+\end{columns}
+\end{frame}
+
+% \begin{frame}{ACO Algorithm Pseudocode}
+\begin{algorithmic}[1]
+\tiny
+\STATE \textbf{Initialize:} pheromone matrix $\tau[v][c] \leftarrow \tau_0$
+\FOR{iteration = 1 to max\_iterations}
+    \STATE solutions $\leftarrow$ []
+    \FOR{ant = 1 to m (parallel)}  \textit{\textcolor{gray}{// Ant Solution Construction}}
+        \STATE solution $\leftarrow$ \{\}
+        \STATE vertices $\leftarrow$ shuffle(V)
+        \FOR{each $v$ in vertices}  \textit{\textcolor{gray}{// Sequential vertex coloring}}
+            \STATE valid\_colors $\leftarrow$ \{$c$ : no neighbor uses $c$\}
+            \IF{valid\_colors is empty}
+                \STATE valid\_colors $\leftarrow$ \{new color\}
+            \ENDIF
+            \STATE $\eta[c] \leftarrow 2.0$ if $c$ used, else $1.0$  \textit{\textcolor{gray}{// Heuristic}}
+            \STATE $P(c) \leftarrow \frac{[\tau[v][c]]^{\alpha} \cdot [\eta[c]]^{\beta}}{\sum_{c'} [\tau[v][c']]^{\alpha} \cdot [\eta[c']]^{\beta}}$  \textit{\textcolor{gray}{// Probability}}
+            \STATE solution[$v$] $\leftarrow$ select $c$ with probability $P(c)$
+        \ENDFOR
+        \STATE solutions.append(solution)
+    \ENDFOR
+    \STATE best\_solution $\leftarrow$ argmin(solutions)  \textit{\textcolor{gray}{// Select iteration best}}
+    \STATE \textbf{Evaporate:} $\tau[v][c] \leftarrow (1-\rho) \cdot \tau[v][c]$ for all $v, c$
+    \STATE \textbf{Deposit:} $\tau[v][c] \leftarrow \tau[v][c] + \frac{Q}{\text{num\_colors}}$ for $(v,c)$ in best\_solution
+    \IF{no improvement for patience $\times$ max\_iterations}
+        \STATE \textbf{break}  \textit{\textcolor{gray}{// Early stopping}}
+    \ENDIF
+\ENDFOR
+\STATE \textbf{return} best solution found
+\end{algorithmic}
+\end{frame}
+
+% \begin{frame}{Solution Representation \& Constraint Handling}
+\begin{block}{Solution Representation}
+Dictionary mapping: $\text{Solution} = \{v_1: c_1, v_2: c_2, \dots, v_n: c_n\}$
+\end{block}
+
+\begin{block}{Constraint Handling: Preserving Strategy}
+\begin{itemize}
+    \item Only valid colors considered (no conflicts with neighbors)
+    \item Dynamic pheromone matrix expansion when needed
+    \item \textbf{Guarantees:} All solutions are feasible ($F(C) = 0$)
+\end{itemize}
+\end{block}
+
+\begin{block}{Population Generation}
+\begin{itemize}
+    \item New population generated at each iteration
+    \item Random starting nodes for diversity
+    \item Random visitation order
+\end{itemize}
+\end{block}
+\end{frame}
+
+\begin{frame}{Diversification \& Intensification}
+\begin{columns}
+\column{0.5\textwidth}
+\textbf{Intensification:}
+\begin{itemize}
+    \item Pheromone reinforcement on best solutions
+    \item Heuristic preference for used colors ($\eta=2.0$)
+    \item High $\alpha$ increases exploitation
+    \item High $\beta$ increases intensification
+\end{itemize}
+
+\column{0.5\textwidth}
+\textbf{Diversification:}
+\begin{itemize}
+    \item Pheromone evaporation $(1-\rho)$
+    \item Probabilistic (not greedy) selection
+    \item Random node ordering
+    \item Multiple parallel ants
+    \item Low $\rho$ promotes exploration
+\end{itemize}
+\end{columns}
+
+\vspace{0.5cm}
+\begin{center}
+\textbf{Balance:} Adaptive mechanism between exploration and exploitation
+\end{center}
+\end{frame}
+
+% Section 3: Experimental Setup
+\section{Experimental Setup}
+
+\begin{frame}{Hyperparameter Tuning with Optuna}
+\begin{block}{Optimization Setup}
+\begin{itemize}
+    \item \textbf{Framework:} Optuna TPE (Tree-structured Parzen Estimator)
+    \item \textbf{Trials:} 40 independent trials
+    \item \textbf{Parallel Workers:} 6 (n\_jobs=6)
+    \item \textbf{Duration:} 46 hours wall-clock (225 hours computational)
+    \item \textbf{Tuning Dataset:} gc\_500\_9 (500 vertices, 90\% density)
+    \item \textbf{Objective:} Minimize total colors
+\end{itemize}
+\end{block}
+
+\begin{block}{Tuning Results}
+\begin{itemize}
+    \item Started at \textbf{215 colors}
+    \item Best trial (Trial 19): \textbf{200 colors}
+    \item \textbf{Improvement:} 15-color reduction (7\%)
+\end{itemize}
+\end{block}
+\end{frame}
+
+\begin{frame}{Optimal Parameters}
+\begin{table}
+\centering
+\small
+\begin{tabular}{lcc}
+\toprule
+\textbf{Parameter} & \textbf{Search Range} & \textbf{Optimal Value} \\
+\midrule
+Iterations ($T$) & [200, 500] & 261 \\
+Alpha ($\alpha$) & [0.5, 2.0] & 1.536 \\
+Beta ($\beta$) & [1.0, 10.0] & \textbf{5.966} \\
+Rho ($\rho$) & [0.01, 0.5] & \textbf{0.097} \\
+Ant Count ($m$) & [20, 100] & 82 \\
+Pheromone Deposit ($Q$) & [0.1, 5.0] & 1.299 \\
+Patience Ratio & [0.3, 0.8] & 0.577 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vspace{0.3cm}
+\textbf{Key Findings:} High $\beta$ (heuristic) and low $\rho$ (evaporation) \\
+$\rightarrow$ Intensification dominates over diversification
+\end{frame}
+
+\begin{frame}{Optimization History}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/history.png}
+    \caption{Optuna optimization history over 40 trials - Trial 19 achieved best result}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Optimization Timeline}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.95\textwidth]{figures/timeline.png}
+    \caption{Parallel execution timeline showing 6 workers running 40 trials over 46 hours}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Parameter Analysis}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\textwidth]{figures/slice.png}
+    \caption{Parameter slice plots - Beta and iterations show clear trends}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Parameter Importance}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.7\textwidth]{figures/importances.png}
+    \caption{Iterations and Beta dominate performance; Rho has minimal impact}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Best Trial Visualization}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.75\textwidth]{figures/best_trial_graph_coloring.png}
+    \caption{Trial 19 coloring of gc\_500\_9 - Valid conflict-free solution}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Benchmark Datasets}
+\begin{table}
+\centering
+\small
+\begin{tabular}{lcccc}
+\toprule
+\textbf{Instance} & \textbf{Vertices} & \textbf{Edges} & \textbf{Density} & \textbf{BKS} \\
+\midrule
+dsjc250.5 & 250 & 31,336 & 50.3\% & 28 \\
+dsjc500.9 & 500 & 224,874 & 90.0\% & 126 \\
+dsjc1000.5 & 1000 & 249,826 & 50.0\% & 85 \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vspace{0.3cm}
+\textbf{Test Protocol:}
+\begin{itemize}
+    \item DIMACS benchmark instances
+    \item 3 independent runs per instance
+    \item Statistical robustness assessment
+\end{itemize}
+\end{frame}
+
+% Section 4: Results
+\section{Results and Discussion}
+
+\begin{frame}{Three-Way Performance Comparison}
+\begin{table}
+\centering
+\tiny
+\begin{tabular}{llcccccc}
+\toprule
+\textbf{Instance} & \textbf{Algorithm} & \textbf{Best} & \textbf{Avg.} & \textbf{Std.} & \textbf{Time (s)} & \textbf{Dev. (\%)} \\
+\midrule
+\multirow{3}{*}{dsjc250.5} & Greedy & 42 & 42.0 & 0.00 & 0.04 & 50.0 \\
+& Tabu Search & 34 & 34.7 & 0.58 & 925.7 & 21.4 \\
+& \textbf{ACO} & \textbf{55} & \textbf{55.7} & \textbf{0.58} & \textbf{1134.4} & \textbf{96.4} \\
+\midrule
+\multirow{3}{*}{dsjc500.9} & Greedy & 174 & 174.0 & 0.00 & 0.24 & 38.1 \\
+& Tabu Search & 164 & 166.0 & 2.00 & 6730.9 & 30.2 \\
+& \textbf{ACO} & \textbf{199} & \textbf{201.3} & \textbf{2.52} & \textbf{5853.5} & \textbf{57.9} \\
+\midrule
+\multirow{3}{*}{dsjc1000.5} & Greedy & 125 & 125.0 & 0.00 & 0.73 & 47.1 \\
+& Tabu Search & 124 & 124.7 & 0.58 & 10026.2 & 45.9 \\
+& \textbf{ACO} & \textbf{226} & \textbf{227.0} & \textbf{1.00} & \textbf{13669.6} & \textbf{165.9} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\vspace{0.2cm}
+\textbf{Key Finding:} ACO underperforms both Greedy and Tabu Search \\
+\textbf{Deviation:} 58-167\% vs BKS (TS: 21-46\%, Greedy: 38-50\%)
+\end{frame}
+
+\begin{frame}{Best Colors Comparison}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/comparison_best_colors.png}
+    \caption{ACO produces 58-166\% more colors than BKS}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Average Colors Comparison}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/comparison_avg_colors.png}
+    \caption{Performance gap widens with graph size: 61\% (250v) → 82\% (1000v)}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Execution Time Comparison}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/comparison_execution_time.png}
+    \caption{ACO time comparable to TS despite 82 parallel ants}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Algorithm Comparison Summary}
+\begin{block}{Greedy (Baseline)}
+\textbf{Strength:} Extremely fast (< 1 second) \\
+\textbf{Weakness:} Moderate quality (38-50\% deviation) \\
+\textbf{Use Case:} Rapid prototyping, time-critical applications
+\end{block}
+
+\begin{block}{Tabu Search (Assignment 2)}
+\textbf{Strength:} Best solution quality (21-46\% deviation) \\
+\textbf{Weakness:} High computational cost (926-10,026 seconds) \\
+\textbf{Use Case:} Quality-critical applications with time budget
+\end{block}
+
+\begin{block}{ACO (This Work)}
+\textbf{Strength:} Consistent, no initial dependency \\
+\textbf{Weakness:} Poorest quality (58-167\% deviation), comparable time to TS \\
+\textbf{Current Status:} Not recommended in present form
+\end{block}
+\end{frame}
+
+\begin{frame}{Why ACO Underperforms}
+\begin{enumerate}
+    \item \textbf{Constructive Nature:}
+    \begin{itemize}
+        \item Builds from scratch vs TS starts with ~40 colors and improves to ~35
+        \item Must discover good assignments purely through pheromone learning
+    \end{itemize}
+    
+    \item \textbf{Local Construction:}
+    \begin{itemize}
+        \item Ants make locally optimal decisions without global view
+        \item TS has global view of all conflicts
+    \end{itemize}
+    
+    \item \textbf{Pheromone Sparsity:}
+    \begin{itemize}
+        \item Large color sets (50-200 colors) dilute pheromone signals
+        \item TS's tabu list prevents specific moves without dilution
+    \end{itemize}
+\end{enumerate}
+
+\vspace{0.3cm}
+\textbf{Scalability Issue:} Performance degradation increases with graph size \\
+(96\% deviation on 250v → 167\% on 1000v)
+\end{frame}
+
+\begin{frame}{Key Insights}
+\begin{block}{Quality-Time Trade-off}
+\begin{itemize}
+    \item \textbf{Greedy:} Fast but moderate quality
+    \item \textbf{Tabu Search:} Excellent quality, high cost
+    \item \textbf{ACO:} Poor quality despite comparable cost to TS
+\end{itemize}
+\end{block}
+
+\begin{block}{Paradigm Suitability}
+\begin{itemize}
+    \item \textbf{Population-based $\neq$ automatically better}
+    \item Improvement-based (TS) benefits from feasible starting solutions
+    \item Constructive methods (ACO) must learn from scratch
+    \item Problem structure determines paradigm suitability
+\end{itemize}
+\end{block}
+
+\begin{block}{Tuning Insights}
+High $\beta$ and low $\rho$ essential → \textbf{Intensification > Diversification} \\
+Questions whether ACO's pheromone learning is well-suited for GCP
+\end{block}
+\end{frame}
+
+% Section 5: Conclusion
+\section{Conclusion}
+
+\begin{frame}{Contributions}
+\begin{enumerate}
+    \item \textbf{Implementation:}
+    \begin{itemize}
+        \item Constructive ACO with dynamic pheromone matrix
+        \item 82 parallel ants using multi-threading
+    \end{itemize}
+    
+    \item \textbf{Comprehensive Tuning:}
+    \begin{itemize}
+        \item Optuna framework: 40 trials, 6 parallel workers, 46 hours
+        \item 15-color improvement (215 → 200 colors)
+    \end{itemize}
+    
+    \item \textbf{Empirical Comparison:}
+    \begin{itemize}
+        \item Three-way analysis: Greedy vs TS vs ACO
+        \item DIMACS benchmarks (250-1000 vertices)
+        \item Reveals constructive vs improvement-based trade-offs
+    \end{itemize}
+    
+    \item \textbf{Insights:}
+    \begin{itemize}
+        \item Population-based methods not inherently superior
+        \item For GCP: heuristics and search time > pheromone dynamics
+        \item No universally best algorithm - problem-dependent
+    \end{itemize}
+\end{enumerate}
+\end{frame}
+
+\begin{frame}{Future Work}
+\textbf{Potential Enhancements:}
+\begin{itemize}
+    \item Improved heuristics (degree-based, conflict-prediction)
+    \item Hybrid approaches (TS-quality initialization for pheromones)
+    \item Local search post-processing
+    \item Alternative pheromone models (edge-color instead of node-color)
+    \item Adaptive parameter control
+\end{itemize}
+
+\vspace{0.5cm}
+\textbf{Research Directions:}
+\begin{itemize}
+    \item Investigation of why pheromone learning fails for GCP
+    \item Comparison with other population-based methods (GA, PSO)
+    \item Problem structure analysis for metaheuristic selection
+\end{itemize}
+\end{frame}
+
+\begin{frame}[plain]
+\centering
+\Huge Thank You!
+\vspace{1cm}
+
+\Large Questions?
+\end{frame}
+
+\end{document}

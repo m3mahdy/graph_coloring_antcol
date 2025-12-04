@@ -296,12 +296,12 @@ ACO balances exploration and exploitation through multiple complementary mechani
 \section{Motivation and Contribution}
 
 \subsection{Motivation}
-The GCP is $\text{NP}$-hard, meaning that finding the optimal chromatic number for large graphs is computationally infeasible using exact methods. While single-solution metaheuristics like Tabu Search have proven effective, they suffer from several limitations: dependency on initial solution quality, vulnerability to local optima, and limited exploration of the solution space. \textbf{Ant Colony Optimization} is chosen as a population-based alternative because:
+The GCP is $\text{NP}$-hard, meaning that finding the optimal chromatic number for large graphs is computationally infeasible using exact methods. \textbf{Ant Colony Optimization} is chosen as a population-based metaheuristic because:
 
 \begin{itemize}
-    \item \textbf{Constructive Approach:} ACO builds solutions from scratch rather than improving existing ones, eliminating dependency on initial solution quality and avoiding local optima traps inherent in improvement-based methods.
+    \item \textbf{Constructive Approach:} ACO builds solutions from scratch rather than improving existing ones, eliminating dependency on initial solution quality.
     
-    \item \textbf{Collective Intelligence:} Multiple ants explore the solution space in parallel, enabling simultaneous investigation of diverse solution construction paths and more robust exploration than single-solution methods.
+    \item \textbf{Collective Intelligence:} Multiple ants explore the solution space in parallel, enabling simultaneous investigation of diverse solution construction paths.
     
     \item \textbf{Adaptive Learning:} Pheromone-based memory accumulates knowledge about successful color assignments over iterations, creating an adaptive bias toward high-quality solutions without rigid deterministic rules.
     
