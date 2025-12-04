@@ -102,7 +102,7 @@ def generate_timeline(json_path, output_path):
     ax.tick_params(axis='x', labelsize=11, pad=8)
     
     # Set labels and title
-    ax.set_xlabel('Time (Hour:Minute, Day Month)', fontsize=13, fontweight='bold', labelpad=15)
+    ax.set_xlabel('Time (Hour:Minute, Date)', fontsize=13, fontweight='bold', labelpad=15)
     ax.set_ylabel('Trial Number', fontsize=13, fontweight='bold', labelpad=10)
     ax.set_title('Optuna Hyperparameter Tuning Timeline', fontsize=15, fontweight='bold', pad=20)
     
@@ -148,8 +148,11 @@ def generate_timeline(json_path, output_path):
 
 
 if __name__ == '__main__':
-    json_file = '../data/studies/aco_study_limited_dataset_20251130_195639/aco_study_limited_dataset_20251130_195639_summary.json'
-    output_file = '../figures/timeline.png'
+    # NOTE: The paths are relative to the execution location. 
+    # Ensure '../data/studies/...' and '../figures/...' directories exist 
+    # or adjust paths if running from a different directory.
+    json_file = 'data/studies/aco_study_limited_dataset_20251130_195639/aco_study_limited_dataset_20251130_195639_summary.json'
+    output_file = 'figures/timeline.png'
     
     try:
         generate_timeline(json_file, output_file)
