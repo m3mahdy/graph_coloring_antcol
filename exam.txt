@@ -1,0 +1,16 @@
+using a genetic algorithm, with many examples
+
+1- how to extract children from parent using different crossover methods, and also the same for crossover with permutations,
+
+2- solution representation, objective function, crossover and mutation for
+
+- quatratic assignment problem
+
+- facility location problem
+
+- set covering
+
+- set partitioning problem
+
+want many examples for them with problem explanations and how to solve it using genetic algorithm, and the common application for each type of these 4 categories of the problems, similarities between them, and what the application may be confusing between them and how to differentiate between them, and deep explanation for everything
+

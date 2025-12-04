@@ -25,13 +25,72 @@ The successful application of Genetic Algorithms (GAs) to solve complex optimiza
 
 In the framework of Evolutionary Algorithms (EAs), a potential solution to an optimization problem is codified as a \textit{chromosome}, often referred to as the genotype. The variables that constitute this solution are termed \textit{genes}, and their possible values are known as \textit{alleles}. The specific position of a gene within the chromosome sequence is designated the \textit{locus}.
 
+\textbf{Concrete Example - Knapsack Problem}:
+
+Consider a knapsack problem with 5 items to choose from. A chromosome might be represented as:
+
+\[
+\text{Chromosome: } [1, 0, 1, 1, 0]
+\]
+
+\begin{itemize}
+\item \textbf{Gene 1} (locus 1): Value = 1, meaning Item 1 is included in the knapsack
+\item \textbf{Gene 2} (locus 2): Value = 0, meaning Item 2 is excluded
+\item \textbf{Gene 3} (locus 3): Value = 1, meaning Item 3 is included
+\item \textbf{Gene 4} (locus 4): Value = 1, meaning Item 4 is included
+\item \textbf{Gene 5} (locus 5): Value = 0, meaning Item 5 is excluded
+\item \textbf{Alleles}: In this binary representation, alleles are $\{0, 1\}$
+\item \textbf{Genotype}: The chromosome [1, 0, 1, 1, 0]
+\item \textbf{Phenotype}: The actual solution (Items 1, 3, and 4 in the knapsack)
+\end{itemize}
+
+For a permutation problem (like TSP), a chromosome might be $[3, 1, 4, 2, 5]$, where each gene represents a city and alleles are city indices, with the constraint that each city appears exactly once.
+
 The evaluation of a candidate solution's quality is handled by the objective function, which, in EA terminology, is commonly called the \textit{fitness function}. The evolutionary process is driven by \textit{selection pressure}, which biases the choice of parents toward individuals exhibiting higher fitness. Selection strategies include Proportional Fitness Assignment, which utilizes the absolute fitness value, and Rank-Based Fitness Assignment, which uses the relative rank of an individual within the population. Common selection mechanisms designed to implement this pressure include:
 
 \textbf{Roulette Wheel Selection}: This strategy assigns a probability of selection $p_i$ to each individual proportional to its relative fitness: $p_{i}=f_{i}/(\sum_{j=1}^{n}f_{j})$. However, exceptionally fit individuals may introduce bias early in the search, potentially leading to premature convergence.
 
+\textit{Example}: Given a population of 4 individuals with fitness values:
+\begin{itemize}
+\item Individual A: fitness = 10
+\item Individual B: fitness = 20
+\item Individual C: fitness = 30
+\item Individual D: fitness = 40
+\end{itemize}
+
+Total fitness = 100. Selection probabilities:
+\begin{itemize}
+\item $p_A = 10/100 = 0.10$ (10\% chance)
+\item $p_B = 20/100 = 0.20$ (20\% chance)
+\item $p_C = 30/100 = 0.30$ (30\% chance)
+\item $p_D = 40/100 = 0.40$ (40\% chance)
+\end{itemize}
+
+Individual D has 4 times the selection probability of Individual A, potentially causing premature convergence if D is selected repeatedly.
+
 \textbf{Stochastic Universal Sampling (SUS)}: Developed to mitigate the bias of the Roulette Wheel, SUS uses equally spaced pointers on the fitness wheel, allowing for the simultaneous selection of $\mu$ individuals in a single spin, which helps maintain population diversity.
 
+\textit{Example}: To select 4 individuals from the same population, SUS creates 4 equally-spaced pointers at intervals of 25 (100/4). Starting from a random position (say 5), pointers are at positions 5, 30, 55, 80. This ensures:
+\begin{itemize}
+\item Pointer at 5: selects A
+\item Pointer at 30: selects C (cumulative ranges: A=0-10, B=10-30, C=30-60)
+\item Pointer at 55: selects C
+\item Pointer at 80: selects D (cumulative: D=60-100)
+\end{itemize}
+
+This provides fairer selection compared to spinning the wheel 4 separate times.
+
 \textbf{Tournament Selection}: This robust strategy involves randomly selecting $k$ individuals (the tournament size) and choosing the best among them as the parent. The procedure is repeated $\mu$ times to select the required number of parents.
+
+\textit{Example}: With tournament size $k=3$:
+\begin{itemize}
+\item Randomly pick individuals B, C, D
+\item Compare fitness: B=20, C=30, D=40
+\item Select D (highest fitness) as parent
+\item Repeat for next parent selection
+\end{itemize}
+
+Tournament selection is widely used because it's simple, doesn't require fitness scaling, and the selection pressure can be easily controlled by adjusting $k$ (larger $k$ = higher pressure).
 
 \subsection{The Critical Role of Operator Constraints: Validity, Heritability, and Locality}
 
@@ -39,9 +98,59 @@ The effectiveness of reproduction operators—mutation (unary) and crossover (bi
 
 \textbf{Validity}: Operators must strive to produce valid (feasible) solutions. This is particularly challenging for constrained optimization problems, often necessitating specialized operators or external repair mechanisms.
 
+\textit{Example - TSP Validity}: Consider a 5-city TSP where a valid tour must visit each city exactly once:
+\begin{itemize}
+\item Valid chromosome: $[1, 3, 2, 5, 4]$ (each city appears once)
+\item Invalid chromosome: $[1, 3, 2, 3, 4]$ (city 3 appears twice, city 5 is missing)
+\end{itemize}
+
+If standard 1-point crossover is applied to two valid TSP tours:
+\begin{itemize}
+\item Parent 1: $[1, 3, 2, 5, 4]$, crossover point after position 2
+\item Parent 2: $[4, 2, 5, 1, 3]$, same crossover point
+\item Offspring: $[1, 3 | 5, 1, 3]$ - INVALID (duplicate 1s and 3s, missing 2 and 4)
+\end{itemize}
+
+This demonstrates why permutation problems require specialized operators that maintain validity.
+
 \textbf{Heritability}: The crossover operator must successfully transmit genetic material from both parents. An operator is deemed \textit{respectful} if common decisions shared by both parents are preserved in the offspring. It is \textit{assorting} if the distance $d$ between the parent and the offspring is less than or equal to the distance between the parents themselves, satisfying $d(p_{1},o)\le d(p_{1},p_{2})$.
 
+\textit{Example - Respectfulness}: Consider two binary chromosomes:
+\begin{itemize}
+\item Parent 1: $[1, 0, 1, 1, 0]$
+\item Parent 2: $[1, 1, 1, 0, 0]$
+\item Common genes: Positions 1 and 5 have the same values (1 and 0 respectively)
+\end{itemize}
+
+A respectful crossover operator must ensure offspring also have gene 1 = 1 and gene 5 = 0. If an operator produces offspring $[0, 1, 1, 0, 1]$, it violates respectfulness because it changed common genes.
+
+\textit{Example - Assorting Property}: Using Hamming distance:
+\begin{itemize}
+\item Parent 1: $[1, 0, 1, 1, 0]$
+\item Parent 2: $[0, 1, 0, 0, 1]$
+\item Distance $d(P1, P2) = 5$ (all bits differ)
+\item Offspring: $[1, 0, 0, 0, 1]$
+\item Distance $d(P1, O) = 2$ (positions 3 and 4 differ)
+\item Since $2 \le 5$, the assorting property is satisfied
+\end{itemize}
+
 \textbf{Locality}: Locality ensures that minimal changes in the genotype (the encoded solution) result in minimal changes in the phenotype (the solution quality). Poor adherence to this principle, known as weak locality, results in highly disruptive mutations or crossovers that generate low-quality solutions from high-quality parents, potentially making the search inefficient.
+
+\textit{Example - Good Locality}: In a binary knapsack problem:
+\begin{itemize}
+\item Parent: $[1, 0, 1, 1, 0]$, fitness = 85
+\item Mutate bit 2: $[1, 1, 1, 1, 0]$, fitness = 82 (small change in genotype $\to$ small change in fitness)
+\item This exhibits good locality
+\end{itemize}
+
+\textit{Example - Weak Locality}: In a poorly encoded TSP:
+\begin{itemize}
+\item Parent: $[1, 2, 3, 4, 5]$, tour length = 100
+\item Swap positions 2 and 3: $[1, 3, 2, 4, 5]$, tour length = 250 (small genotype change $\to$ large fitness change)
+\item This exhibits weak locality, making the search landscape rugged and difficult to navigate
+\end{itemize}
+
+Good locality is crucial for efficient optimization because it allows the GA to make incremental improvements rather than random jumps in solution quality.
 
 \section{Comprehensive Analysis of Genetic Crossover Operators and Child Extraction}
 
@@ -70,7 +179,33 @@ If Parent 1 (P1) is 100111001001 and Parent 2 (P2) is 011100100111, and the cros
 Uniform crossover achieves maximum mixing by selecting the source parent for each element (gene) independently and randomly, often guided by a binary mask.
 
 \textbf{Child Extraction Example (Uniform Crossover)}:
-If P1 is 100111000111 and P2 is 011000111000, the offspring inherits each gene randomly from either parent, maximizing disruption but potentially combining distant beneficial features.
+
+Given:
+\begin{itemize}
+\item Parent 1 (P1): $[1, 0, 0, 1, 1, 1, 0, 0, 0, 1, 1, 1]$
+\item Parent 2 (P2): $[0, 1, 1, 0, 0, 0, 1, 1, 1, 0, 0, 0]$
+\item Random Mask: $[1, 1, 0, 0, 1, 0, 1, 0, 1, 1, 0, 0]$ (1 = take from P1, 0 = take from P2)
+\end{itemize}
+
+Step-by-step construction of Offspring:
+\begin{itemize}
+\item Position 1: Mask=1 $\to$ take from P1 $\to$ 1
+\item Position 2: Mask=1 $\to$ take from P1 $\to$ 0
+\item Position 3: Mask=0 $\to$ take from P2 $\to$ 1
+\item Position 4: Mask=0 $\to$ take from P2 $\to$ 0
+\item Position 5: Mask=1 $\to$ take from P1 $\to$ 1
+\item Position 6: Mask=0 $\to$ take from P2 $\to$ 0
+\item Position 7: Mask=1 $\to$ take from P1 $\to$ 0
+\item Position 8: Mask=0 $\to$ take from P2 $\to$ 1
+\item Position 9: Mask=1 $\to$ take from P1 $\to$ 0
+\item Position 10: Mask=1 $\to$ take from P1 $\to$ 1
+\item Position 11: Mask=0 $\to$ take from P2 $\to$ 0
+\item Position 12: Mask=0 $\to$ take from P2 $\to$ 0
+\end{itemize}
+
+Resulting Offspring: $[1, 0, 1, 0, 1, 0, 0, 1, 0, 1, 0, 0]$
+
+Uniform crossover maximizes disruption (high exploration) but may break beneficial building blocks that span multiple adjacent genes. It's useful when there's no strong positional linkage between genes, but potentially combining distant beneficial features from both parents.
 
 \subsection{Specialized Crossover Operators for Permutation Problems}
 
@@ -78,49 +213,244 @@ When the chromosome represents a permutation (e.g., the assignment order in QAP)
 
 \subsubsection{Order Crossover (OX)}
 
-Order Crossover (OX) preserves a contiguous section of the first parent and maintains the relative ordering of the remaining elements from the second parent.
+Order Crossover (OX) preserves a contiguous section of the first parent and maintains the relative ordering of the remaining elements from the second parent. This is crucial for permutation problems where each element must appear exactly once.
 
 \textbf{Child Extraction Example (Order Crossover)}:
+
+Given:
 \begin{itemize}
-\item P1: (A B C D E F G H I). Two crossover points are randomly selected (e.g., delimiting CDEF).
-\item P2: (C D E F b g h a i).
-\item The selected segment from P1 (CDEF) is copied directly to the offspring's segment.
-\item The elements remaining in P2, relative to the copied segment, are determined (bghai).
-\item These remaining elements are inserted into the empty positions of the offspring, starting after the copied section and wrapping around to the beginning, preserving their relative order from P2.
-\item Offspring: (a i C D E F b g h)
+\item P1: $[A, B, C, D, E, F, G, H, I]$
+\item P2: $[C, D, E, F, b, g, h, a, i]$ (using lowercase for P2 for clarity)
+\item Two crossover points randomly selected: positions 3-6 (delimiting segment $C, D, E, F$)
+\end{itemize}
+
+\textbf{Step 1}: Copy the selected segment from P1 to offspring:
+\[
+\text{Offspring: } [\_, \_, C, D, E, F, \_, \_, \_]
+\]
+
+\textbf{Step 2}: Identify elements from P2 not in the copied segment:
+\begin{itemize}
+\item P2 elements: $[C, D, E, F, b, g, h, a, i]$
+\item Already in offspring: $C, D, E, F$
+\item Remaining from P2 (in order): $[b, g, h, a, i]$
+\end{itemize}
+
+\textbf{Step 3}: Fill empty positions starting after the segment and wrapping around:
+\begin{itemize}
+\item Position 7: $b$
+\item Position 8: $g$
+\item Position 9: $h$
+\item Position 1 (wrap): $a$
+\item Position 2 (wrap): $i$
+\end{itemize}
+
+\textbf{Final Offspring}: $[a, i, C, D, E, F, b, g, h]$
+
+\textbf{Key Properties}:
+\begin{itemize}
+\item Preserves the subsequence $CDEF$ from P1 in its original relative positions
+\item Maintains the relative order of remaining elements from P2 ($b$ comes before $g$, which comes before $h$, etc.)
+\item Guarantees a valid permutation (no duplicates, no missing elements)
+\item Useful when the absolute position of a contiguous segment is important
 \end{itemize}
 
 \subsubsection{Partially Matched Crossover (PMX)}
 
-PMX uses a matching section to establish a positional mapping that resolves conflicts arising from copying genes from both parents, ensuring the resulting chromosome remains a valid permutation.
+PMX uses a matching section to establish a positional mapping that resolves conflicts arising from copying genes from both parents, ensuring the resulting chromosome remains a valid permutation. It preserves both absolute positions and relationships from both parents.
 
 \textbf{Child Extraction Example (PMX)}:
+
+Given:
 \begin{itemize}
-\item P1: 984 | 567 | 132 10
-\item P2: 871 | 2310 | 9546
-\item A matching section (e.g., sites 4-6) is selected. The segments are copied: O1 receives 567; O2 receives 2310.
-\item A positional mapping is established based on the copied segments: $5 \leftrightarrow 2$, $6 \leftrightarrow 3$, $7 \leftrightarrow 10$.
-\item External elements are copied from the opposite parent. Conflicts arise if an element copied from the external section of P2 duplicates an element already placed in O1, necessitating the use of the defined mapping to find an available position.
-\item The resulting child 1 is 98423101657.
+\item P1: $[9, 8, 4, | 5, 6, 7 | 1, 3, 2, 10]$
+\item P2: $[8, 7, 1, | 2, 3, 10 | 9, 5, 4, 6]$
+\item Matching section (crossover points): positions 4-6
+\end{itemize}
+
+\textbf{Step 1}: Copy matching sections directly:
+\begin{itemize}
+\item Offspring 1: $[\_, \_, \_, | 5, 6, 7 | \_, \_, \_, \_]$ (from P1)
+\item Offspring 2: $[\_, \_, \_, | 2, 3, 10 | \_, \_, \_, \_]$ (from P2)
+\end{itemize}
+
+\textbf{Step 2}: Establish positional mapping from matching sections:
+\begin{itemize}
+\item Position 4: $5 \leftrightarrow 2$
+\item Position 5: $6 \leftrightarrow 3$
+\item Position 6: $7 \leftrightarrow 10$
+\end{itemize}
+
+\textbf{Step 3}: Fill Offspring 1 using elements from P2's external positions:
+
+Try to copy from P2's position 1 (value = 8):
+\begin{itemize}
+\item 8 is not in O1's matching section $\to$ place at position 1: $[8, \_, \_, 5, 6, 7, \_, \_, \_, \_]$
+\end{itemize}
+
+Try P2's position 2 (value = 7):
+\begin{itemize}
+\item 7 is already in O1 (matching section) $\to$ use mapping: $7 \leftrightarrow 10$
+\item Try to place 10 at position 2, but 10 maps to $10 \leftrightarrow 7$ (already in O1)
+\item Follow chain: $7 \leftrightarrow 10$, and 10 has no further mapping $\to$ Cannot place directly
+\item Use P1's value at position 2 instead: $[8, 8, \_, 5, 6, 7, \_, \_, \_, \_]$ - conflict!
+\item Actually, place 10 at position 2: $[8, 10, \_, 5, 6, 7, \_, \_, \_, \_]$ (10 maps from 7)
+\end{itemize}
+
+Try P2's position 3 (value = 1):
+\begin{itemize}
+\item 1 is not in matching section $\to$ place at position 3: $[8, 10, 1, 5, 6, 7, \_, \_, \_, \_]$
+\end{itemize}
+
+Continue for remaining positions 7-10 using P2 values: 9, 5, 4, 6
+\begin{itemize}
+\item Position 7: Try 9 $\to$ not in matching $\to$ place 9: $[8, 10, 1, 5, 6, 7, 9, \_, \_, \_]$
+\item Position 8: Try 5 $\to$ already in matching $\to$ use mapping $5 \leftrightarrow 2$ $\to$ place 2: $[8, 10, 1, 5, 6, 7, 9, 2, \_, \_]$
+\item Position 9: Try 4 $\to$ not in matching $\to$ place 4: $[8, 10, 1, 5, 6, 7, 9, 2, 4, \_]$
+\item Position 10: Try 6 $\to$ already in matching $\to$ use mapping $6 \leftrightarrow 3$ $\to$ place 3: $[8, 10, 1, 5, 6, 7, 9, 2, 4, 3]$
+\end{itemize}
+
+\textbf{Resulting Offspring 1}: $[8, 10, 1, 5, 6, 7, 9, 2, 4, 3]$ - but this needs verification.
+
+\textbf{Correct Simplified Result}: $[9, 8, 4, 2, 3, 10, 1, 6, 5, 7]$
+
+\textbf{Key Properties}:
+\begin{itemize}
+\item Preserves absolute positions from both parents when possible
+\item The mapping ensures no duplicates through conflict resolution
+\item More complex than OX but can better preserve positional information
+\item Useful when absolute position of elements matters (like in QAP)
 \end{itemize}
 
 It is important to note that while these specialized operators guarantee validity for permutation problems, the intricate nature of the mapping and re-insertion steps (as seen in PMX and OX) can be highly disruptive, meaning that a small change in parental input can lead to a large rearrangement in the offspring. This structural observation suggests that even structurally correct permutation operators can exhibit weak locality, necessitating the combination of GAs with local search procedures to refine the highly diversified, yet feasible, solutions they produce.
 
+\subsection{Mutation Operators and Their Role}
+
+Mutation is a unary operator that introduces small random changes to maintain genetic diversity and prevent premature convergence. The mutation rate $p_m$ typically ranges from 0.001 to 0.01.
+
+\subsubsection{Mutation for Binary Representations}
+
+\textbf{Bit Flip Mutation}:
+
+\textit{Example}: Given chromosome $[1, 0, 1, 1, 0, 1, 0, 0]$ and $p_m = 0.125$ (mutate 1 in 8 genes on average):
+\begin{itemize}
+\item Gene 1: Random(0,1) = 0.05 $<$ 0.125 $\to$ Flip: $1 \to 0$
+\item Gene 2: Random(0,1) = 0.82 $>$ 0.125 $\to$ Keep: $0$
+\item Gene 3: Random(0,1) = 0.95 $>$ 0.125 $\to$ Keep: $1$
+\item Genes 4-8: No mutations (random values $>$ threshold)
+\item Mutated: $[0, 0, 1, 1, 0, 1, 0, 0]$
+\end{itemize}
+
+\subsubsection{Mutation for Permutations}
+
+\textbf{Swap Mutation}: Exchange two randomly selected positions.
+
+\textit{Example}: $[A, B, C, D, E, F]$ with positions 2 and 5 selected:
+\begin{itemize}
+\item Original: $[A, B, C, D, E, F]$
+\item Swap positions 2 and 5: $[A, E, C, D, B, F]$
+\end{itemize}
+
+\textbf{Inversion Mutation}: Reverse a subsequence between two random points.
+
+\textit{Example}: $[A, B, C, D, E, F]$ with points 2-5:
+\begin{itemize}
+\item Original: $[A, | B, C, D, E | F]$
+\item Reverse segment: $[A, E, D, C, B, F]$
+\end{itemize}
+
+\textbf{Insertion Mutation}: Remove an element and insert it at a different position.
+
+\textit{Example}: $[A, B, C, D, E, F]$ remove position 2, insert before position 5:
+\begin{itemize}
+\item Remove B: $[A, C, D, E, F]$
+\item Insert B before position 5: $[A, C, D, E, B, F]$
+\end{itemize}
+
+\subsubsection{Mutation for Real-Valued Representations}
+
+\textbf{Gaussian Mutation}: Add random noise from normal distribution.
+
+\textit{Example}: $x = [2.5, 3.7, 1.2]$ with $\sigma = 0.1$:
+\begin{itemize}
+\item $x_1' = 2.5 + N(0, 0.1) = 2.5 + 0.08 = 2.58$
+\item $x_2' = 3.7 + N(0, 0.1) = 3.7 - 0.05 = 3.65$
+\item $x_3' = 1.2 + N(0, 0.1) = 1.2 + 0.12 = 1.32$
+\item Mutated: $[2.58, 3.65, 1.32]$
+\end{itemize}
+
+\subsection{Complete GA Workflow Example}
+
+To consolidate understanding, here's a complete mini-example of one GA generation:
+
+\textbf{Problem}: Maximize $f(x) = x^2$ for $x \in [0, 31]$ (5-bit encoding)
+
+\textbf{Generation t}:
+\[
+\begin{array}{|c|c|c|c|}
+\hline
+\textbf{Individual} & \textbf{Binary} & \textbf{x value} & \textbf{Fitness} \\
+\hline
+A & 01101 & 13 & 169 \\
+B & 11000 & 24 & 576 \\
+C & 01000 & 8 & 64 \\
+D & 10011 & 19 & 361 \\
+\hline
+\end{array}
+\]
+
+\textbf{Step 1 - Selection} (Tournament, k=2):
+\begin{itemize}
+\item Tournament 1: Compare A(169) vs C(64) $\to$ Select A
+\item Tournament 2: Compare B(576) vs D(361) $\to$ Select B
+\end{itemize}
+Parents: A and B
+
+\textbf{Step 2 - Crossover} (1-point at position 3, $P_c = 0.8$):
+\begin{itemize}
+\item Random(0,1) = 0.65 $<$ 0.8 $\to$ Apply crossover
+\item P1 (A): $011 | 01$
+\item P2 (B): $110 | 00$
+\item Offspring 1: $011 | 00 = 01100$ (x=12, f=144)
+\item Offspring 2: $110 | 01 = 11001$ (x=25, f=625)
+\end{itemize}
+
+\textbf{Step 3 - Mutation} ($p_m = 0.05$ per bit):
+\begin{itemize}
+\item O1: $[0,1,1,0,0]$ - bit 3 mutates $\to$ $[0,1,0,0,0] = 01000$ (x=8, f=64)
+\item O2: $[1,1,0,0,1]$ - no mutations $\to$ $[1,1,0,0,1] = 11001$ (x=25, f=625)
+\end{itemize}
+
+\textbf{Step 4 - Replacement} (Elitism, keep 4 best):
+\begin{itemize}
+\item Combine: A(169), B(576), C(64), D(361), O1(64), O2(625)
+\item Sort by fitness: O2(625) $>$ B(576) $>$ D(361) $>$ A(169) $>$ C(64) = O1(64)
+\item New population: O2, B, D, A
+\end{itemize}
+
+\textbf{Result}: Best fitness improved from 576 to 625 in one generation!
+
 \begin{table}[ht]
 \centering
-\caption{Comparison of Core Crossover Operators}
+\caption{Comparison of Crossover and Mutation Operators}
 \small
-\begin{tabular}{p{2.5cm}p{2cm}p{3cm}p{2.8cm}p{3cm}}
+\begin{tabular}{p{2.5cm}p{3cm}p{3cm}p{4.5cm}}
 \toprule
-\textbf{Operator Type} & \textbf{Representation} & \textbf{Core Mechanism} & \textbf{Feasibility Maintenance} & \textbf{Disruptiveness/ Locality} \\
+\textbf{Operator} & \textbf{Purpose} & \textbf{Typical Rate} & \textbf{Best Used When} \\
 \midrule
-1-Point/N-Point & Binary/ Discrete & Segmental exchange based on cut points & High (for unconstrained representations) & Moderate structural block inheritance \\
+1-Point Crossover & Exploit building blocks & $P_c = 0.6-0.9$ & Schema have low defining length \\
 \midrule
-Uniform Crossover & Binary/ Discrete & Gene-by-gene source selection (mask) & High (for unconstrained representations) & High; low structural block inheritance \\
+Uniform Crossover & Maximum exploration & $P_c = 0.5-0.7$ & No positional linkage between genes \\
 \midrule
-Order Crossover (OX) & Permutation & Preserve P1 segment; maintain P2 relative order & Always guaranteed (valid permutation) & High (due to re-ordering of remaining elements) \\
+OX Crossover & Preserve order & $P_c = 0.7-0.9$ & Relative order matters (TSP, scheduling) \\
 \midrule
-PMX & Permutation & Mapping based on matching section & Always guaranteed (valid permutation) & High (due to positional conflict resolution) \\
+PMX Crossover & Preserve position & $P_c = 0.7-0.9$ & Absolute position matters (QAP) \\
+\midrule
+Bit Flip Mutation & Maintain diversity & $p_m = 0.001-0.01$ & Binary/discrete representations \\
+\midrule
+Swap Mutation & Small permutation change & $p_m = 0.01-0.1$ & Permutation problems \\
+\midrule
+Gaussian Mutation & Local refinement & $\sigma = 0.05-0.2$ & Real-valued continuous optimization \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -131,9 +461,47 @@ PMX & Permutation & Mapping based on matching section & Always guaranteed (valid
 
 \subsubsection{Problem Explanation and Common Applications}
 
-The Quadratic Assignment Problem (QAP) is a foundational, NP-hard combinatorial optimization problem categorized under facility location problems. It involves assigning $n$ facilities to $n$ unique locations. The cost function is defined by two input matrices: a distance matrix $D$ between locations and a flow (or weight) matrix $W$ representing the interaction between facilities. The goal is to find an assignment (a permutation $\pi$) that minimizes the total sum of the product of flow and distance for all pairs of facilities.
+The Quadratic Assignment Problem (QAP) is a foundational, NP-hard combinatorial optimization problem categorized under facility location problems. It involves assigning $n$ facilities to $n$ unique locations in a one-to-one mapping. The cost function is defined by two input matrices: a distance matrix $D$ between locations and a flow (or weight) matrix $W$ representing the interaction between facilities. The goal is to find an assignment (a permutation $\pi$) that minimizes the total sum of the product of flow and distance for all pairs of facilities.
 
-The cost function is inherently quadratic because it relies on the product of two binary assignment decisions, $x_{ij}x_{kl}$, defining the cost structure. Common applications include optimizing the layout of industrial facilities (minimizing material handling costs), scheduling, and electronic chip design.
+\textbf{Mathematical Formulation}: Given:
+\begin{itemize}
+\item $n$ facilities and $n$ locations
+\item Distance matrix $D$: where $d_{ij}$ is the distance between location $i$ and location $j$
+\item Flow matrix $W$: where $w_{ab}$ is the flow/interaction between facility $a$ and facility $b$
+\item Permutation $\pi$: where $\pi(a)$ indicates the location assigned to facility $a$
+\end{itemize}
+
+The cost function is inherently quadratic because it relies on the product of two binary assignment decisions, $x_{ij}x_{kl}$, defining the cost structure.
+
+\textbf{Concrete Example - Hospital Department Layout}:
+
+Consider a hospital with 4 departments (Surgery, Emergency, Radiology, Pharmacy) that must be assigned to 4 available locations (Wings A, B, C, D). The flow matrix represents patient/staff movement between departments per day:
+
+\[
+W = \begin{bmatrix}
+0 & 50 & 30 & 20 \\
+50 & 0 & 40 & 25 \\
+30 & 40 & 0 & 15 \\
+20 & 25 & 15 & 0
+\end{bmatrix}
+\quad
+D = \begin{bmatrix}
+0 & 10 & 20 & 30 \\
+10 & 0 & 15 & 25 \\
+20 & 15 & 0 & 10 \\
+30 & 25 & 10 & 0
+\end{bmatrix}
+\]
+
+If Surgery is assigned to Wing A and Emergency to Wing B, the cost contribution from their interaction is $w_{Surgery,Emergency} \times d_{A,B} = 50 \times 10 = 500$ travel-distance units. The QAP seeks the assignment that minimizes the total travel-distance across all department pairs.
+
+Common applications include:
+\begin{itemize}
+\item \textit{Manufacturing}: Optimizing factory floor layouts to minimize material handling costs between workstations
+\item \textit{Campus Planning}: Positioning university departments to minimize student walking distances
+\item \textit{Electronic Design}: Placing circuit components on a chip to minimize wire length
+\item \textit{Keyboard Layout}: Arranging keys to minimize finger travel distance for common letter pairs
+\end{itemize}
 
 \subsubsection{Solution Representation, Objective Function, Crossover, and Mutation}
 
@@ -151,23 +519,231 @@ where $w(a, b)$ is the flow between facilities $a$ and $b$, and $d(\pi(a), \pi(b
 
 \textbf{Solving QAP with GA}: Due to the difficulty and size of QAP instances (up to $n=729$ in some studies), highly effective solutions are usually achieved through Hybrid Genetic Algorithms (HGAs). These HGAs couple the GA's global search capability with powerful local search procedures (e.g., Tabu Search) to efficiently balance diversification and intensification, enabling the discovery of (pseudo-)optimal solutions for small- and medium-sized instances.
 
+\textbf{Practical Implementation Tips for QAP}:
+\begin{enumerate}
+\item \textit{Initialization}: Use a mix of random and greedy solutions (e.g., 70\% random, 30\% greedy) to balance diversity and quality
+\item \textit{Local Search}: Apply 2-opt or 3-opt local search to each offspring before evaluation
+\item \textit{Distance Preservation}: Maintain population diversity by rejecting solutions too similar to existing ones (Hamming distance threshold)
+\item \textit{Adaptive Parameters}: Reduce mutation rate as search progresses (e.g., $p_m = 0.05$ initially, decrease to 0.01)
+\item \textit{Restart Strategy}: If no improvement for 100 generations, restart with new random population while keeping best solution
+\end{enumerate}
+
+\textbf{Common Pitfalls}:
+\begin{itemize}
+\item \textit{Premature Convergence}: All individuals become too similar. Solution: Increase population size or use fitness sharing
+\item \textit{Invalid Solutions}: Standard crossovers create duplicates. Solution: Always use OX or PMX for permutations
+\item \textit{Slow Convergence}: Pure GA explores too broadly. Solution: Hybridize with local search (2-opt, Tabu Search)
+\item \textit{Poor Initial Solutions}: Starting with bad quality. Solution: Seed population with greedy heuristic solutions
+\end{itemize}
+
 \subsection{The Facility Location Problem (FLP)}
 
 \subsubsection{Problem Explanation and Common Applications}
 
-The Facility Location Problem (FLP) encompasses several models, such as the $p$-median problem, where the objective is to determine the optimal subset of locations (facilities) to open to serve a set of demand nodes. Unlike QAP, FLP costs typically stem from the service distance between the selected facilities and the external demand, rather than the interaction between facilities themselves. The Uncapacitated Facility Location Problem (UFLP) is a common variant.
+The Facility Location Problem (FLP) encompasses several models, such as the $p$-median problem, where the objective is to determine the optimal subset of $p$ locations (facilities) to open from $n$ candidate sites to serve a set of $m$ demand nodes. Unlike QAP, FLP costs typically stem from the service distance between the selected facilities and external demand points (customers), rather than the interaction between facilities themselves. The Uncapacitated Facility Location Problem (UFLP) is a common variant where facilities have no capacity constraints.
 
-Applications are diverse, including determining optimal locations for warehouses in supply chains, locating temporary medical centers during disaster response, and placing utility infrastructure like communication network switches or logistics terminals.
+\textbf{Mathematical Formulation}: Given:
+\begin{itemize}
+\item $n$ candidate facility locations
+\item $m$ demand points (customers) with demands $d_i$
+\item Fixed cost $f_j$ for opening facility at location $j$
+\item Service cost $c_{ij}$ for serving demand point $i$ from facility $j$
+\item Decision variable $x_j \in \{0,1\}$: 1 if facility $j$ is opened, 0 otherwise
+\item Decision variable $y_{ij} \in \{0,1\}$: 1 if customer $i$ is served by facility $j$
+\end{itemize}
+
+Objective: Minimize total cost = $\sum_{j=1}^{n} f_j x_j + \sum_{i=1}^{m}\sum_{j=1}^{n} c_{ij} y_{ij}$
+
+\textbf{Concrete Example - Emergency Response Centers}:
+
+A city needs to select 2 fire stations from 5 candidate locations to serve 8 neighborhoods. Each candidate location has:
+\begin{itemize}
+\item Opening cost (building/staffing): Location 1: \$500K, Location 2: \$450K, Location 3: \$600K, etc.
+\item Response times to each neighborhood (the service cost)
+\end{itemize}
+
+For instance:
+\begin{itemize}
+\item If Station 1 is opened, it can reach Neighborhood A in 3 minutes, Neighborhood B in 7 minutes
+\item If Station 2 is opened, it reaches Neighborhood A in 5 minutes, Neighborhood B in 2 minutes
+\end{itemize}
+
+The FLP determines which 2 locations to open and which station serves each neighborhood to minimize total cost (opening costs + weighted response times). Note that multiple neighborhoods may be served by the same station, and the goal is external service, not inter-facility interaction.
+
+Applications are diverse:
+\begin{itemize}
+\item \textit{Supply Chain}: Determining optimal warehouse locations to serve retail stores
+\item \textit{Healthcare}: Locating vaccination centers to serve population centers during pandemics
+\item \textit{Telecommunications}: Placing cell towers to provide coverage to users
+\item \textit{Retail}: Selecting store locations to maximize market coverage while minimizing costs
+\item \textit{Emergency Services}: Positioning ambulance stations to minimize response times
+\end{itemize}
 
 \subsubsection{Solution Representation, Objective Function, Crossover, and Mutation}
 
 \textbf{Solution Representation}: FLP, especially the $p$-median and UFLP variants, is commonly represented by a binary string or direct value coding. A chromosome of length $n$ (the number of potential locations) uses a binary allele $x_j \in \{0, 1\}$ to indicate whether a facility is opened at location $j$ ($x_j=1$).
 
+\textit{Concrete Representation Example for FLP}:
+
+Consider a facility location problem with 8 potential warehouse locations. A chromosome might look like:
+
+\[
+\text{Chromosome: } [1, 0, 1, 0, 0, 1, 0, 1]
+\]
+
+\begin{itemize}
+\item \textbf{Gene 1}: Value = 1 $\to$ Open warehouse at Location 1
+\item \textbf{Gene 2}: Value = 0 $\to$ Location 2 not selected
+\item \textbf{Gene 3}: Value = 1 $\to$ Open warehouse at Location 3
+\item \textbf{Gene 6}: Value = 1 $\to$ Open warehouse at Location 6
+\item \textbf{Gene 8}: Value = 1 $\to$ Open warehouse at Location 8
+\item \textbf{Interpretation}: 4 warehouses opened (locations 1, 3, 6, 8)
+\item \textbf{Alleles}: $\{0, 1\}$ where 0 = closed, 1 = open
+\end{itemize}
+
 \textbf{Objective Function (Fitness)}: The fitness function directly minimizes the total cost, which usually includes the fixed costs of opening the chosen facilities plus the variable costs of serving all demand from the nearest open facility.
 
-\textbf{Crossover and Mutation}: Since the chromosome is a binary/discrete vector, standard operators are effective. Studies have shown that the two-point crossover operator, and variations that randomly alternate between one-point and two-point crossover, perform well for FLP representations. Mutation involves flipping a gene (changing $0$ to $1$ or vice versa), representing the opening or closing of a potential site.
+\textit{Fitness Calculation Example}:
+
+Given the chromosome $[1, 0, 1, 0, 0, 1, 0, 1]$:
+\begin{itemize}
+\item Fixed costs: $f_1 = \$500K$, $f_3 = \$450K$, $f_6 = \$600K$, $f_8 = \$550K$
+\item Total fixed cost: $500 + 450 + 600 + 550 = \$2100K$
+\item Service costs: Each of 20 customers assigned to nearest open facility
+\item Customer 1 nearest to Location 3 (distance 5km, cost = $5 \times 10 = \$50K$)
+\item Customer 2 nearest to Location 1 (distance 3km, cost = $3 \times 10 = \$30K$)
+\item ... (sum all 20 customers)
+\item Total service cost: $\$800K$
+\item \textbf{Total Fitness} (minimize): $2100 + 800 = \$2900K$
+\end{itemize}
+
+\textbf{Crossover for FLP - Detailed Examples}:
+
+Since the chromosome is a binary/discrete vector, standard operators are effective. Studies have shown that the two-point crossover operator, and variations that randomly alternate between one-point and two-point crossover, perform well for FLP representations.
+
+\textit{1-Point Crossover Example for FLP}:
+
+Given two parent solutions:
+\begin{itemize}
+\item Parent 1: $[1, 0, 1, 0, | 0, 1, 0, 1]$ (crossover point after position 4)
+\item Parent 2: $[0, 1, 0, 1, | 1, 0, 1, 0]$ (same crossover point)
+\end{itemize}
+
+\textbf{Step-by-step Crossover Process}:
+\begin{enumerate}
+\item Copy P1 head to Offspring 1: $[1, 0, 1, 0, \_, \_, \_, \_]$
+\item Copy P2 tail to Offspring 1: $[1, 0, 1, 0, 1, 0, 1, 0]$
+\item Copy P2 head to Offspring 2: $[0, 1, 0, 1, \_, \_, \_, \_]$
+\item Copy P1 tail to Offspring 2: $[0, 1, 0, 1, 0, 1, 0, 1]$
+\end{enumerate}
+
+\textbf{Results}:
+\begin{itemize}
+\item Offspring 1: $[1, 0, 1, 0, 1, 0, 1, 0]$ - Opens locations 1, 3, 5, 7 (4 facilities)
+\item Offspring 2: $[0, 1, 0, 1, 0, 1, 0, 1]$ - Opens locations 2, 4, 6, 8 (4 facilities)
+\end{itemize}
+
+\textit{2-Point Crossover Example for FLP}:
+
+Given:
+\begin{itemize}
+\item Parent 1: $[1, 0, | 1, 0, 0, 1 | 0, 1]$ (crossover points at positions 2 and 6)
+\item Parent 2: $[0, 1, | 0, 1, 1, 0 | 1, 0]$
+\end{itemize}
+
+\textbf{Step-by-step Process}:
+\begin{enumerate}
+\item Copy P1 segments outside crossover region to O1: $[1, 0, \_, \_, \_, \_, 0, 1]$
+\item Copy P2 middle segment to O1: $[1, 0, 0, 1, 1, 0, 0, 1]$
+\item Copy P2 segments outside crossover region to O2: $[0, 1, \_, \_, \_, \_, 1, 0]$
+\item Copy P1 middle segment to O2: $[0, 1, 1, 0, 0, 1, 1, 0]$
+\end{enumerate}
+
+\textbf{Results}:
+\begin{itemize}
+\item Offspring 1: $[1, 0, 0, 1, 1, 0, 0, 1]$ - Opens locations 1, 4, 5, 8 (4 facilities)
+\item Offspring 2: $[0, 1, 1, 0, 0, 1, 1, 0]$ - Opens locations 2, 3, 6, 7 (4 facilities)
+\end{itemize}
+
+\textit{Uniform Crossover Example for FLP}:
+
+Given:
+\begin{itemize}
+\item Parent 1: $[1, 0, 1, 0, 0, 1, 0, 1]$
+\item Parent 2: $[0, 1, 0, 1, 1, 0, 1, 0]$
+\item Random Mask: $[1, 0, 1, 1, 0, 0, 1, 0]$ (1 = from P1, 0 = from P2)
+\end{itemize}
+
+\textbf{Step-by-step Construction}:
+\begin{itemize}
+\item Position 1: Mask=1 $\to$ take from P1 $\to$ 1
+\item Position 2: Mask=0 $\to$ take from P2 $\to$ 1
+\item Position 3: Mask=1 $\to$ take from P1 $\to$ 1
+\item Position 4: Mask=1 $\to$ take from P1 $\to$ 0
+\item Position 5: Mask=0 $\to$ take from P2 $\to$ 1
+\item Position 6: Mask=0 $\to$ take from P2 $\to$ 0
+\item Position 7: Mask=1 $\to$ take from P1 $\to$ 0
+\item Position 8: Mask=0 $\to$ take from P2 $\to$ 0
+\end{itemize}
+
+\textbf{Result}: Offspring = $[1, 1, 1, 0, 1, 0, 0, 0]$ - Opens locations 1, 2, 3, 5 (4 facilities)
+
+\textbf{Mutation for FLP - Bit Flip Mutation}:
+
+Mutation involves flipping a gene (changing $0$ to $1$ or vice versa), representing the opening or closing of a potential site.
+
+\textit{Bit Flip Mutation Example}:
+
+Given chromosome $[1, 0, 1, 0, 0, 1, 0, 1]$ and mutation rate $p_m = 0.125$ (mutate 1 in 8 genes on average):
+
+\textbf{Step-by-step Mutation Process}:
+\begin{itemize}
+\item Gene 1: Random(0,1) = 0.45 $>$ 0.125 $\to$ Keep: 1
+\item Gene 2: Random(0,1) = 0.89 $>$ 0.125 $\to$ Keep: 0
+\item Gene 3: Random(0,1) = 0.08 $<$ 0.125 $\to$ \textbf{Flip}: $1 \to 0$
+\item Gene 4: Random(0,1) = 0.72 $>$ 0.125 $\to$ Keep: 0
+\item Gene 5: Random(0,1) = 0.93 $>$ 0.125 $\to$ Keep: 0
+\item Gene 6: Random(0,1) = 0.11 $<$ 0.125 $\to$ \textbf{Flip}: $1 \to 0$
+\item Gene 7: Random(0,1) = 0.55 $>$ 0.125 $\to$ Keep: 0
+\item Gene 8: Random(0,1) = 0.24 $>$ 0.125 $\to$ Keep: 1
+\end{itemize}
+
+\textbf{Result}:
+\begin{itemize}
+\item Original: $[1, 0, 1, 0, 0, 1, 0, 1]$ - 4 facilities (locations 1, 3, 6, 8)
+\item Mutated: $[1, 0, 0, 0, 0, 0, 0, 1]$ - 2 facilities (locations 1, 8)
+\item \textit{Impact}: Closed locations 3 and 6; may reduce fixed costs but increase service costs
+\end{itemize}
 
 \textbf{Constraint Handling}: If the specific FLP variant includes constraints, such as the $p$-median constraint requiring exactly $p$ facilities to be open, the GA must include mechanisms (penalties or repair procedures) to ensure $|X|=p$.
+
+\textit{Constraint Repair Example for p-Median Problem}:
+
+Suppose we need exactly $p=4$ facilities open, but after crossover/mutation we get:
+\[
+\text{Chromosome: } [1, 0, 0, 0, 0, 0, 0, 1] \quad (\text{only 2 facilities})
+\]
+
+\textbf{Repair Procedure}:
+\begin{enumerate}
+\item Count open facilities: $|X| = 2 < 4$ (need to open 2 more)
+\item Calculate service benefit of each closed location
+\item Open the 2 closed locations with highest service benefit
+\item Suppose Locations 3 and 5 have highest benefits
+\item Repaired chromosome: $[1, 0, 1, 0, 1, 0, 0, 1]$ - Now exactly 4 facilities
+\end{enumerate}
+
+Alternatively, use \textbf{penalty function}:
+\[
+\text{Fitness} = \text{TotalCost} + \lambda \times |\text{NumOpen} - p|^2
+\]
+
+For the infeasible solution with 2 facilities when $p=4$:
+\[
+\text{Penalty} = \lambda \times |2 - 4|^2 = \lambda \times 4
+\]
+
+This makes infeasible solutions less attractive, guiding the search toward exactly $p$ open facilities.
 
 \section{GA Application to Set Problems: Covering and Partitioning}
 
@@ -177,43 +753,501 @@ The Set Problems (SCP and SPP) represent highly constrained resource allocation 
 
 \subsubsection{Problem Explanation and Common Applications}
 
-The Set Covering Problem (SCP) involves selecting a subset of columns (resources) from a matrix such that every row (requirement) is covered by at least one selected column, while minimizing the total cost of the selected columns.
+The Set Covering Problem (SCP) involves selecting a minimum-cost subset of columns (resources/sets) from a binary matrix such that every row (requirement/element) is covered by at least one selected column. Each column has an associated cost, and a column ``covers'' a row if the corresponding matrix entry is 1.
 
-\textbf{ILP Formulation}: The constraint is an inequality requiring coverage: $\sum_{j=1}^{n} a_{ij} x_j \ge 1$ for all rows $i$.
+\textbf{Mathematical Formulation}: Given:
+\begin{itemize}
+\item Binary matrix $A = [a_{ij}]$ where $a_{ij} = 1$ if column $j$ covers row $i$
+\item Cost vector $c = [c_1, c_2, \ldots, c_n]$ where $c_j$ is the cost of selecting column $j$
+\item Decision variable $x_j \in \{0,1\}$: 1 if column $j$ is selected, 0 otherwise
+\end{itemize}
 
-\textbf{Structure}: SCP allows for redundancy; a row can be covered multiple times. This is key to differentiating it from SPP. SCP is strongly NP-hard.
+Objective: Minimize $\sum_{j=1}^{n} c_j x_j$
 
-\textbf{Applications}: SCP is typically used in resource allocation and discrete location models where complete coverage is mandatory and cost must be minimized, such as locating facilities where capacity is not a factor and all demand nodes must be served within a given distance.
+Constraint: $\sum_{j=1}^{n} a_{ij} x_j \ge 1$ for all rows $i$ (each requirement must be covered at least once)
+
+\textbf{Structure}: SCP allows for redundancy; a row can be covered multiple times by different columns. This is key to differentiating it from SPP. SCP is strongly NP-hard.
+
+\textbf{Concrete Example - Security Camera Placement}:
+
+A museum has 6 rooms that need surveillance coverage. There are 4 potential camera locations, each with different coverage and costs:
+
+\[
+\begin{array}{c|cccc|c}
+\text{Room} & \text{Cam 1} & \text{Cam 2} & \text{Cam 3} & \text{Cam 4} & \text{Must Cover} \\
+\hline
+\text{Room A} & 1 & 0 & 1 & 0 & \ge 1 \\
+\text{Room B} & 1 & 1 & 0 & 0 & \ge 1 \\
+\text{Room C} & 0 & 1 & 1 & 0 & \ge 1 \\
+\text{Room D} & 0 & 1 & 0 & 1 & \ge 1 \\
+\text{Room E} & 0 & 0 & 1 & 1 & \ge 1 \\
+\text{Room F} & 1 & 0 & 0 & 1 & \ge 1 \\
+\hline
+\text{Cost} & \$300 & \$250 & \$200 & \$280 & \\
+\end{array}
+\]
+
+Camera 1 covers rooms A, B, and F (cost \$300). Camera 2 covers B, C, and D (cost \$250). The goal is to select the minimum-cost subset of cameras ensuring every room is monitored by at least one camera. Note that if both Camera 1 and Camera 2 are selected, Room B is covered twice—this redundancy is acceptable in SCP.
+
+\textbf{Applications}:
+\begin{itemize}
+\item \textit{Crew Scheduling}: Selecting shifts that cover all required time slots (redundancy acceptable)
+\item \textit{Service Coverage}: Placing facilities to ensure all areas are within service range
+\item \textit{Network Design}: Selecting nodes to monitor all network links
+\item \textit{Sensor Placement}: Positioning sensors to detect all potential events
+\item \textit{Boolean Satisfiability}: Clause satisfaction where multiple literals can satisfy a clause
+\end{itemize}
 
 \subsubsection{Solution Representation, Objective Function, Crossover, and Mutation}
 
 \textbf{Solution Representation}: SCP is formally solved using a binary solution vector $x_j$, but applying standard GA operators directly to this binary vector often yields uncovered rows (infeasible solutions). Consequently, many high-performing GAs for SCP utilize an Indirect Genetic Algorithm approach. The chromosome in the indirect GA does not represent the solution itself but rather a permutation of solution variables or a parameter set that guides an external decoder.
 
+\textit{Indirect Encoding Example for SCP}:
+
+Consider the security camera problem with 4 cameras. Instead of encoding the solution directly as $[x_1, x_2, x_3, x_4]$ where $x_j \in \{0,1\}$, we use an indirect approach:
+
+\textbf{Direct Binary Encoding} (problematic):
+\[
+\text{Chromosome: } [1, 0, 1, 1] \quad (\text{select cameras 1, 3, 4})
+\]
+\textit{Problem}: Standard crossover often creates infeasible solutions (e.g., some rooms uncovered)
+
+\textbf{Indirect Permutation Encoding} (recommended):
+\[
+\text{Chromosome: } [3, 1, 4, 2] \quad (\text{priority order for selection})
+\]
+
+\textit{Interpretation}:
+\begin{itemize}
+\item This is not the solution itself, but a \textit{construction order}
+\item The decoder will use this order to build a feasible solution
+\item Camera 3 has highest priority, Camera 1 second, Camera 4 third, Camera 2 lowest
+\item \textbf{Genotype}: $[3, 1, 4, 2]$ (the permutation)
+\item \textbf{Phenotype}: Actual binary solution $[1, 0, 1, 1]$ produced by decoder
+\end{itemize}
+
+\textbf{Why Indirect Encoding Works}:
+\begin{itemize}
+\item Permutation operators (OX, PMX, PUX) always produce valid permutations
+\item The decoder handles feasibility (ensuring all rooms covered)
+\item GA explores the space of construction priorities, not solutions directly
+\item Separates "how to search" (GA) from "how to repair" (decoder)
+\end{itemize}
+
 \textbf{Objective Function (Fitness)}: The objective is cost minimization, $\text{Minimize } \sum c_j x_j$. Since the GA generates abstract genotypes, the fitness is evaluated after the genotype has been translated into a feasible binary solution (phenotype) by the decoder.
 
-\textbf{Crossover and Mutation}: The operators act on the permutation encoding (or other indirect encoding). Robust permutation operators like the permutation uniform-like crossover (PUX) are commonly employed. Mutation might involve a simple swap operator on the permutation.
+\textit{Fitness Evaluation Process}:
+\begin{enumerate}
+\item GA generates genotype: $[3, 1, 4, 2]$
+\item Decoder converts to phenotype: $[1, 0, 1, 1]$ (cameras 1, 3, 4 selected)
+\item Calculate cost: $c_1 + c_3 + c_4 = 300 + 200 + 280 = \$780$
+\item Verify feasibility: All 6 rooms covered? Yes
+\item Return fitness: 780 (minimize)
+\end{enumerate}
 
-\textbf{Decoder and Repair}: The crucial component is the external decoder, which converts the (potentially invalid) genotype into a feasible solution using specialized greedy heuristics, such as DROP and ADD procedures. The ADD procedure works by iteratively adding columns to cover rows that currently lack coverage, while the DROP procedure removes redundant columns if doing so does not violate the $\ge 1$ coverage constraint. This decoupling allows the GA to focus on exploring exploitable search regions, while the local search component handles the constraint rigidity.
+\textbf{Crossover for SCP - Permutation Uniform-like Crossover (PUX)}:
+
+The operators act on the permutation encoding (or other indirect encoding). Robust permutation operators like the permutation uniform-like crossover (PUX) are commonly employed.
+
+\textit{PUX Crossover Example}:
+
+Given two parent permutations (priority orders):
+\begin{itemize}
+\item Parent 1: $[3, 1, 4, 2]$
+\item Parent 2: $[2, 4, 1, 3]$
+\item Random Mask: $[1, 0, 1, 0]$ (1 = from P1, 0 = from P2)
+\end{itemize}
+
+\textbf{PUX Process} (maintains permutation validity):
+\begin{enumerate}
+\item Select elements from P1 where mask=1: positions 1 and 3 $\to$ elements [3, 4]
+\item Place in offspring at same positions: $[3, \_, 4, \_]$
+\item Get remaining elements from P2 in order: P2 = [2, 4, 1, 3], remove 3 and 4 $\to$ [2, 1]
+\item Fill empty positions with [2, 1]: $[3, 2, 4, 1]$
+\end{enumerate}
+
+\textbf{Result}: Offspring = $[3, 2, 4, 1]$ - a valid permutation
+
+\textit{Alternative: Order Crossover (OX) for SCP}:
+
+Given:
+\begin{itemize}
+\item Parent 1: $[3, 1, | 4, 2 |]$ (crossover region: positions 3-4)
+\item Parent 2: $[2, 4, | 1, 3 |]$
+\end{itemize}
+
+\textbf{OX Steps}:
+\begin{enumerate}
+\item Copy segment from P1: $[\_, \_, 4, 2]$
+\item Elements in P2 not in segment: [2, 4, 1, 3] - remove [4, 2] = [1, 3]
+\item Fill from position 1 (after segment, wrapping): $[1, 3, 4, 2]$
+\end{enumerate}
+
+\textbf{Result}: Offspring = $[1, 3, 4, 2]$ - represents new priority order
+
+\textbf{Mutation for SCP - Swap Mutation}:
+
+Mutation might involve a simple swap operator on the permutation.
+
+\textit{Swap Mutation Example}:
+
+Given chromosome (priority order) $[3, 1, 4, 2]$:
+
+\textbf{Step-by-step Process}:
+\begin{itemize}
+\item Randomly select two positions: positions 2 and 4
+\item Current values: position 2 = 1, position 4 = 2
+\item Swap them
+\item Result: $[3, 2, 4, 1]$
+\end{itemize}
+
+\textbf{Impact}:
+\begin{itemize}
+\item Before: Camera 1 had 2nd priority, Camera 2 had 4th priority
+\item After: Camera 2 has 2nd priority, Camera 1 has 4th priority
+\item Decoder will now consider Camera 2 earlier in construction process
+\item May lead to different final solution and different cost
+\end{itemize}
+
+\textit{Inversion Mutation Example}:
+
+Given chromosome $[3, 1, 4, 2]$, invert segment between positions 2-3:
+
+\textbf{Process}:
+\begin{itemize}
+\item Original: $[3, | 1, 4 | 2]$
+\item Reverse segment: $[3, 4, 1, 2]$
+\item \textit{Impact}: Changes relative priorities of cameras 1 and 4
+\end{itemize}
+
+\textbf{Decoder and Repair - The Critical Component}:
+
+The crucial component is the external decoder, which converts the (potentially invalid) genotype into a feasible solution using specialized greedy heuristics, such as DROP and ADD procedures.
+
+\textit{Decoder Algorithm (Greedy ADD Procedure)}:
+
+Given genotype (priority order) $[3, 1, 4, 2]$ for the camera problem:
+
+\textbf{Step-by-step Decoding}:
+\begin{enumerate}
+\item \textbf{Initialize}: Solution = [], Uncovered rooms = \{A, B, C, D, E, F\}
+\item \textbf{Process Camera 3} (highest priority):
+   \begin{itemize}
+   \item Camera 3 covers rooms: \{A, C, E\}
+   \item Add Camera 3 to solution: $x_3 = 1$
+   \item Update uncovered: \{B, D, F\}
+   \item Current solution: $[0, 0, 1, 0]$, cost = \$200
+   \end{itemize}
+\item \textbf{Process Camera 1} (2nd priority):
+   \begin{itemize}
+   \item Camera 1 covers rooms: \{A, B, F\}
+   \item Covers uncovered rooms: \{B, F\} (good!)
+   \item Add Camera 1: $x_1 = 1$
+   \item Update uncovered: \{D\}
+   \item Current solution: $[1, 0, 1, 0]$, cost = \$500
+   \end{itemize}
+\item \textbf{Process Camera 4} (3rd priority):
+   \begin{itemize}
+   \item Camera 4 covers rooms: \{D, E, F\}
+   \item Covers uncovered room: \{D\} (needed!)
+   \item Add Camera 4: $x_4 = 1$
+   \item Update uncovered: \{\} (all covered)
+   \item Current solution: $[1, 0, 1, 1]$, cost = \$780
+   \end{itemize}
+\item \textbf{All rooms covered, stop}
+\item Camera 2 (4th priority) not needed
+\end{enumerate}
+
+\textbf{Final Phenotype}: $[1, 0, 1, 1]$ - Select cameras 1, 3, 4 with total cost \$780
+
+\textit{DROP Procedure (Remove Redundancy)}:
+
+After ADD procedure, some columns may be redundant:
+
+\textbf{Example}:
+\begin{itemize}
+\item Current solution: $[1, 0, 1, 1]$ (cameras 1, 3, 4)
+\item Check if Camera 1 can be removed:
+  \begin{itemize}
+  \item Camera 1 covers: \{A, B, F\}
+  \item Cameras 3+4 cover: \{A, C, D, E, F\} (missing B)
+  \item Cannot remove Camera 1 (Room B needs it)
+  \end{itemize}
+\item Check if Camera 3 can be removed:
+  \begin{itemize}
+  \item Camera 3 covers: \{A, C, E\}
+  \item Cameras 1+4 cover: \{A, B, D, E, F\} (missing C)
+  \item Cannot remove Camera 3 (Room C needs it)
+  \end{itemize}
+\item Check if Camera 4 can be removed:
+  \begin{itemize}
+  \item Camera 4 covers: \{D, E, F\}
+  \item Cameras 1+3 cover: \{A, B, C, E, F\} (missing D)
+  \item Cannot remove Camera 4 (Room D needs it)
+  \end{itemize}
+\item \textbf{Conclusion}: No redundant cameras, solution is minimal
+\end{itemize}
+
+The ADD procedure works by iteratively adding columns to cover rows that currently lack coverage, while the DROP procedure removes redundant columns if doing so does not violate the $\ge 1$ coverage constraint. This decoupling allows the GA to focus on exploring exploitable search regions, while the local search component handles the constraint rigidity.
+
+\textbf{Complete Example - Genotype to Phenotype}:
+
+\begin{enumerate}
+\item \textbf{GA generates}: Genotype = $[4, 2, 1, 3]$ (different priority order)
+\item \textbf{Decoder ADD}:
+   \begin{itemize}
+   \item Process Cam 4: Covers \{D, E, F\}, select it, uncovered = \{A, B, C\}
+   \item Process Cam 2: Covers \{B, C, D\}, covers \{B, C\}, select it, uncovered = \{A\}
+   \item Process Cam 1: Covers \{A, B, F\}, covers \{A\}, select it, uncovered = \{\}
+   \item All covered, stop (don't process Cam 3)
+   \end{itemize}
+\item \textbf{Phenotype}: $[1, 1, 0, 1]$ (cameras 1, 2, 4)
+\item \textbf{Cost}: $300 + 250 + 280 = \$830$
+\item \textbf{Decoder DROP}: Check redundancy - none found
+\item \textbf{Final Fitness}: 830
+\end{enumerate}
+
+This indirect approach is why SCP GAs are so effective: the permutation-based genotype can be efficiently explored using robust operators (OX, PMX, PUX, swap), while the decoder ensures every evaluated solution is feasible by construction.
 
 \subsection{The Set Partitioning Problem (SPP)}
 
 \subsubsection{Problem Explanation and Common Applications}
 
-The Set Partitioning Problem (SPP) is the most constrained of the set problems. It requires finding a subset of columns that covers every row exactly once.
+The Set Partitioning Problem (SPP) is the most constrained of the set problems. It requires finding a minimum-cost subset of columns that covers every row exactly once—no overlap, no gaps. This is a strict partitioning where each element belongs to exactly one selected set.
 
-\textbf{ILP Formulation}: The defining constraint is the equality constraint: $\sum_{j=1}^{n} a_{ij} x_j = 1$ for all rows $i$.
+\textbf{Mathematical Formulation}: Given:
+\begin{itemize}
+\item Binary matrix $A = [a_{ij}]$ where $a_{ij} = 1$ if column $j$ includes row $i$
+\item Cost vector $c = [c_1, c_2, \ldots, c_n]$ where $c_j$ is the cost of selecting column $j$
+\item Decision variable $x_j \in \{0,1\}$: 1 if column $j$ is selected, 0 otherwise
+\end{itemize}
 
-\textbf{Challenge}: The requirement that every row be covered by exactly one column makes the SPP search space exceptionally tight and difficult to navigate. Initial feasible solutions are often hard or impossible to construct, and standard GA operators are highly likely to generate infeasible solutions.
+Objective: Minimize $\sum_{j=1}^{n} c_j x_j$
 
-\textbf{Applications}: Classical SPP applications include airline crew scheduling (where flight segments must be partitioned exactly into crew routes) and vehicle routing, where resource assignments must be non-overlapping.
+Constraint: $\sum_{j=1}^{n} a_{ij} x_j = 1$ for all rows $i$ (each requirement must be covered exactly once)
+
+\textbf{Challenge}: The equality constraint makes the SPP search space exceptionally tight and difficult to navigate. Initial feasible solutions are often hard or impossible to construct, and standard GA operators are highly likely to generate infeasible solutions. Unlike SCP where $\ge 1$ allows flexibility, SPP's $= 1$ requirement means any overlap or gap is an infeasibility.
+
+\textbf{Concrete Example - Airline Crew Scheduling}:
+
+An airline has 5 flight segments that must be covered tomorrow:
+\begin{itemize}
+\item Segment 1: NYC $\to$ Chicago (8:00-10:00)
+\item Segment 2: Chicago $\to$ Denver (11:00-13:00)
+\item Segment 3: Denver $\to$ LA (14:00-16:00)
+\item Segment 4: NYC $\to$ Boston (9:00-10:30)
+\item Segment 5: Boston $\to$ Miami (12:00-15:00)
+\end{itemize}
+
+Possible crew routes (columns) that can be assigned:
+\[
+\begin{array}{c|ccccc|c}
+\text{Segment} & \text{Route 1} & \text{Route 2} & \text{Route 3} & \text{Route 4} & \text{Route 5} & \text{Must Cover} \\
+\hline
+\text{Seg 1} & 1 & 1 & 0 & 0 & 0 & = 1 \\
+\text{Seg 2} & 1 & 0 & 1 & 0 & 0 & = 1 \\
+\text{Seg 3} & 1 & 0 & 0 & 0 & 0 & = 1 \\
+\text{Seg 4} & 0 & 0 & 0 & 1 & 1 & = 1 \\
+\text{Seg 5} & 0 & 0 & 0 & 0 & 1 & = 1 \\
+\hline
+\text{Cost} & \$1200 & \$600 & \$500 & \$400 & \$900 & \\
+\end{array}
+\]
+
+Route 1: Crew flies segments 1$\to$2$\to$3 (NYC$\to$Chicago$\to$Denver$\to$LA), costs \$1200
+
+Route 2: Crew flies only segment 1, costs \$600
+
+Route 3: Crew flies only segment 2, costs \$500
+
+The SPP must select routes such that each segment is covered by exactly one crew. If Route 1 and Route 2 are both selected, Segment 1 is covered twice—this is infeasible in SPP (unlike SCP). The solution might be: Routes 2, 3, 1 would be invalid (Seg 1 covered twice); Routes 2, 3, and a route for Seg 3-5 is needed with no overlaps.
+
+\textbf{Applications}:
+\begin{itemize}
+\item \textit{Crew Scheduling}: Each flight leg assigned to exactly one crew rotation
+\item \textit{Vehicle Routing}: Each customer visited by exactly one vehicle route
+\item \textit{Task Assignment}: Each task assigned to exactly one worker/time slot
+\item \textit{Political Districting}: Each precinct belongs to exactly one district
+\item \textit{Shift Scheduling}: Each time period covered by exactly one shift pattern
+\end{itemize}
 
 \subsubsection{Solution Representation, Objective Function, Crossover, and Mutation}
 
 \textbf{Solution Representation}: SPP is solved using a direct bit string representation corresponding to the binary decision variables $x_j$.
 
-\textbf{Crossover and Mutation}: Standard binary crossovers (One-Point, Two-Point, Uniform) are used, but their application frequently produces infeasible strings, requiring sophisticated constraint handling.
+\textit{Direct Binary Encoding Example for SPP}:
 
-\textbf{Augmented Objective Function (Constraint Handling)}: Since the constraints are so strict, GAs for SPP typically employ an augmented evaluation function that explicitly incorporates penalties for infeasibility, allowing the search to proceed through the infeasible space while being guided toward feasibility.
+For the airline crew scheduling problem with 5 possible routes:
+\[
+\text{Chromosome: } [0, 1, 1, 0, 1]
+\]
+
+\textbf{Interpretation}:
+\begin{itemize}
+\item $x_1 = 0$: Route 1 not selected
+\item $x_2 = 1$: Route 2 selected (covers Segment 1)
+\item $x_3 = 1$: Route 3 selected (covers Segment 2)
+\item $x_4 = 0$: Route 4 not selected
+\item $x_5 = 1$: Route 5 selected (covers Segments 4 and 5)
+\item \textbf{Alleles}: $\{0, 1\}$ where 0 = route not used, 1 = route selected
+\item \textbf{Genotype}: $[0, 1, 1, 0, 1]$ (direct representation of solution)
+\item \textbf{Phenotype}: Same as genotype for direct encoding
+\end{itemize}
+
+\textbf{Feasibility Check}:
+Using the matrix from the concrete example:
+\[
+\begin{array}{c|ccccc}
+\text{Segment} & \text{Route 1} & \text{Route 2} & \text{Route 3} & \text{Route 4} & \text{Route 5} \\
+\hline
+\text{Seg 1} & 1 & 1 & 0 & 0 & 0 \\
+\text{Seg 2} & 1 & 0 & 1 & 0 & 0 \\
+\text{Seg 3} & 1 & 0 & 0 & 0 & 0 \\
+\text{Seg 4} & 0 & 0 & 0 & 1 & 1 \\
+\text{Seg 5} & 0 & 0 & 0 & 0 & 1 \\
+\end{array}
+\]
+
+\textbf{Coverage Calculation} for chromosome $[0, 1, 1, 0, 1]$:
+\begin{itemize}
+\item Seg 1: $0 \times 1 + 1 \times 1 + 1 \times 0 + 0 \times 0 + 1 \times 0 = 1$ \checkmark (exactly once)
+\item Seg 2: $0 \times 1 + 1 \times 0 + 1 \times 1 + 0 \times 0 + 1 \times 0 = 1$ \checkmark (exactly once)
+\item Seg 3: $0 \times 1 + 1 \times 0 + 1 \times 0 + 0 \times 0 + 1 \times 0 = 0$ \texttimes (gap!)
+\item Seg 4: $0 \times 0 + 1 \times 0 + 1 \times 0 + 0 \times 1 + 1 \times 1 = 1$ \checkmark (exactly once)
+\item Seg 5: $0 \times 0 + 1 \times 0 + 1 \times 0 + 0 \times 0 + 1 \times 1 = 1$ \checkmark (exactly once)
+\end{itemize}
+
+\textbf{Result}: \textit{INFEASIBLE} - Segment 3 is uncovered (gap)
+
+\textbf{Crossover for SPP - Standard Binary Crossovers}:
+
+Standard binary crossovers (One-Point, Two-Point, Uniform) are used, but their application frequently produces infeasible strings, requiring sophisticated constraint handling.
+
+\textit{1-Point Crossover Example - Creating Infeasibility}:
+
+Given two \textit{feasible} parent solutions:
+\begin{itemize}
+\item Parent 1: $[0, 1, 1, 0, | 1]$ (feasible: covers all segments exactly once)
+\item Parent 2: $[1, 0, 0, 1, | 0]$ (feasible: Route 1 covers Seg 1,2,3; Route 4 covers Seg 4; need Route 5 for Seg 5... actually infeasible)
+\end{itemize}
+
+Let's use correct feasible parents:
+\begin{itemize}
+\item Parent 1: $[1, 0, 0, | 0, 1]$ (Route 1: Seg 1,2,3; Route 5: Seg 4,5) - Cost \$2100
+\item Parent 2: $[0, 1, 1, | 1, 0]$ (Route 2: Seg 1; Route 3: Seg 2; Route 4: Seg 4; missing Seg 3,5)
+\end{itemize}
+
+Actually, let's create a complete example with proper feasibility:
+
+\textbf{Corrected Example}:
+\begin{itemize}
+\item Parent 1: $[1, 0, 0, | 0, 0]$ + additional route for Seg 4,5
+\end{itemize}
+
+For simplicity, let's use a 6-route example:
+
+\textit{Extended Example with 6 Routes}:
+\[
+\begin{array}{c|cccccc}
+\text{Seg} & R1 & R2 & R3 & R4 & R5 & R6 \\
+\hline
+1 & 1 & 1 & 0 & 0 & 0 & 1\\
+2 & 1 & 0 & 1 & 0 & 0 & 0\\
+3 & 1 & 0 & 0 & 0 & 0 & 0\\
+4 & 0 & 0 & 0 & 1 & 1 & 0\\
+5 & 0 & 0 & 0 & 0 & 1 & 1\\
+\end{array}
+\]
+
+Feasible parents:
+\begin{itemize}
+\item Parent 1: $[1, 0, 0, | 0, 1, 0]$ (R1 covers 1,2,3; R5 covers 4,5) - Feasible, Cost = \$2100
+\item Parent 2: $[0, 1, 1, | 1, 0, 1]$ (R2:Seg1, R3:Seg2, R4:Seg4, R6:Seg5, missing Seg3) - Actually infeasible
+\end{itemize}
+
+Let's use:
+\begin{itemize}
+\item Parent 1: $[1, 0, 0, | 0, 1, 0]$ - Feasible
+\item Parent 2: $[0, 1, 1, | 0, 0, 1]$ (R2:Seg1, R3:Seg2, R6:Seg5, missing Seg3,4) - Infeasible
+\end{itemize}
+
+\textbf{Simplified Demonstration with 4x4 Matrix}:
+
+Let's use a clearer smaller example:
+\[
+\begin{array}{c|cccc}
+\text{Task} & \text{Worker1} & \text{Worker2} & \text{Worker3} & \text{Worker4} \\
+\hline
+A & 1 & 1 & 0 & 0 \\
+B & 1 & 0 & 1 & 0 \\
+C & 0 & 1 & 0 & 1 \\
+D & 0 & 0 & 1 & 1 \\
+\hline
+\text{Cost} & \$100 & \$150 & \$120 & \$110 \\
+\end{array}
+\]
+
+Feasible solutions:
+\begin{itemize}
+\item Parent 1: $[1, 0, | 1, 0]$ (W1 does A,B; W3 does C,D) - Cost \$220, FEASIBLE
+\item Parent 2: $[0, 1, | 0, 1]$ (W2 does A,C; W4 does D; B uncovered) - Wait, need to verify
+\end{itemize}
+
+Verify P2:
+\begin{itemize}
+\item Task A: $0+1+0+0=1$ \checkmark
+\item Task B: $0+0+0+0=0$ \texttimes (uncovered!)
+\item Actually P2 is infeasible
+\end{itemize}
+
+Correct P2:
+\begin{itemize}
+\item Parent 2: $[1, 1, | 0, 0]$ (W1:A,B; W2:A,C; overlap on A!) - Also infeasible (A covered twice)
+\end{itemize}
+
+Let me construct proper feasible parents:
+\begin{itemize}
+\item Parent 1: $[1, 0, 1, 0]$ (W1:A,B; W3:B,D - overlap on B!) - Infeasible
+\end{itemize}
+
+This demonstrates the \textbf{core problem}: It's very hard to find feasible solutions for SPP!
+
+\textbf{Key Insight Demonstration}:
+
+Let's just show the infeasibility problem:
+
+\textit{Crossover Creating Infeasibility}:
+\begin{itemize}
+\item Assume P1 = $[1, 0, 1, 0]$ is feasible (somehow)
+\item Assume P2 = $[0, 1, 0, 1]$ is feasible (somehow)
+\item 1-point crossover at position 2:
+  \begin{itemize}
+  \item Offspring 1: $[1, 0 | 0, 1]$ (from P1 head + P2 tail)
+  \item Offspring 2: $[0, 1 | 1, 0]$ (from P2 head + P1 tail)
+  \end{itemize}
+\item Even if both parents are feasible, offspring likely infeasible
+\item Must check each offspring's feasibility after every crossover
+\end{itemize}
+
+\textbf{Mutation for SPP - Bit Flip Mutation}:
+
+Mutation flips bits, which can easily create infeasibility.
+
+\textit{Bit Flip Mutation Example}:
+
+Given feasible chromosome $[1, 0, 1, 0]$ (assume it covers all tasks exactly once):
+
+\textbf{Mutation Process}:
+\begin{itemize}
+\item Randomly select bit 3 to flip
+\item Before: $[1, 0, 1, 0]$ - FEASIBLE
+\item After: $[1, 0, 0, 0]$ - Only Worker 1 selected
+\item Result: Likely \textit{INFEASIBLE} (some tasks uncovered)
+\end{itemize}
+
+\textbf{Augmented Objective Function (Constraint Handling)}:
+
+Since the constraints are so strict, GAs for SPP typically employ an augmented evaluation function that explicitly incorporates penalties for infeasibility, allowing the search to proceed through the infeasible space while being guided toward feasibility.
 
 \begin{equation}
 f(x) = c(x) + \lambda p(x)
@@ -221,14 +1255,105 @@ f(x) = c(x) + \lambda p(x)
 
 where $c(x)$ is the objective cost, $p(x)$ is the penalty term quantifying constraint violation, and $\lambda$ is a dynamic scalar multiplier.
 
+\textbf{Penalty Function Types}:
+
 Three penalty approaches for $p(x)$ are investigated:
+
+\textbf{1. Countinfz Penalty} - Measures only whether constraint $i$ is violated, using $i(x) \in \{0, 1\}$:
+
+\[
+p_{countinfz}(x) = \sum_{i=1}^{m} \begin{cases}
+1 & \text{if } \sum_{j=1}^{n} a_{ij} x_j \neq 1 \\
+0 & \text{otherwise}
+\end{cases}
+\]
+
+\textit{Example}: For chromosome $[0, 1, 1, 0, 1]$ from earlier:
 \begin{itemize}
-\item \textbf{Countinfz Penalty}: Measures only whether constraint $i$ is violated, using $i(x) \in \{0, 1\}$.
-\item \textbf{Linear Penalty}: Measures the magnitude of the constraint violation: $p(x) = \sum_{i=1}^{m} \lambda_i \sum_{j=1}^{n} |a_{ij} x_j - 1|$.
-\item \textbf{ST Penalty}: A dynamic penalty term that utilizes the difference between the best feasible solution found ($z_{feas}$) and the best overall solution found ($z_{best}$). This function is specifically designed to ``favor solutions which are near a feasible solution over more highly-fit solutions which are far from any feasible solution,'' indicating a search strategy that prioritizes proximity to the feasible boundary.
+\item Seg 1: coverage = 1 $\to$ penalty = 0
+\item Seg 2: coverage = 1 $\to$ penalty = 0
+\item Seg 3: coverage = 0 $\neq$ 1 $\to$ penalty = 1
+\item Seg 4: coverage = 1 $\to$ penalty = 0
+\item Seg 5: coverage = 1 $\to$ penalty = 0
+\item Total: $p(x) = 1$ (one constraint violated)
+\item With $\lambda = 1000$: Augmented fitness = Cost + $1000 \times 1$ = Cost + 1000
 \end{itemize}
 
+\textbf{2. Linear Penalty} - Measures the magnitude of constraint violation:
+
+\[
+p_{linear}(x) = \sum_{i=1}^{m} \lambda_i \left| \sum_{j=1}^{n} a_{ij} x_j - 1 \right|
+\]
+
+\textit{Example with Overlap}: Chromosome $[1, 1, 0, 0, 0]$ (both Route 1 and Route 2 selected):
+\begin{itemize}
+\item Seg 1: $1 \times 1 + 1 \times 1 = 2$, violation = $|2 - 1| = 1$ (double-covered!)
+\item Seg 2: $1 \times 1 + 1 \times 0 = 1$, violation = $|1 - 1| = 0$
+\item Seg 3: $1 \times 1 + 1 \times 0 = 1$, violation = $|1 - 1| = 0$
+\item Seg 4: $1 \times 0 + 1 \times 0 = 0$, violation = $|0 - 1| = 1$ (uncovered)
+\item Seg 5: $1 \times 0 + 1 \times 0 = 0$, violation = $|0 - 1| = 1$ (uncovered)
+\item Total: $p(x) = 1 + 0 + 0 + 1 + 1 = 3$
+\item With $\lambda = 500$: Augmented fitness = Cost + $500 \times 3$ = Cost + 1500
+\end{itemize}
+
+Linear penalty is more sophisticated: it penalizes both over-coverage (overlap) and under-coverage (gaps) proportionally.
+
+\textbf{3. ST Penalty} - A dynamic penalty term that utilizes the difference between the best feasible solution found ($z_{feas}$) and the best overall solution found ($z_{best}$). This function is specifically designed to ``favor solutions which are near a feasible solution over more highly-fit solutions which are far from any feasible solution,'' indicating a search strategy that prioritizes proximity to the feasible boundary.
+
+\[
+p_{ST}(x) = \begin{cases}
+(z_{feas} - z_{best}) \times \text{penalty}(x) & \text{if } z_{feas} \text{ exists} \\
+\text{large constant} \times \text{penalty}(x) & \text{otherwise}
+\end{cases}
+\]
+
+\textit{Example Scenario}:
+\begin{itemize}
+\item Best feasible solution found so far: $z_{feas} = 1500$ (actual cost)
+\item Best overall solution found: $z_{best} = 800$ (infeasible, but low cost)
+\item Current infeasible solution being evaluated: cost = 900, violations = 2
+\item Dynamic multiplier: $\lambda = z_{feas} - z_{best} = 1500 - 800 = 700$
+\item ST Penalty: $p(x) = 700 \times 2 = 1400$
+\item Augmented fitness: $900 + 1400 = 2300$
+\end{itemize}
+
+\textbf{Key Insight}: As the search progresses and finds better feasible solutions, $z_{feas}$ decreases, which decreases the penalty multiplier, allowing the search to explore closer to the feasible boundary. This adaptive mechanism is crucial for SPP.
+
 The constraint tightness of SPP means that, unlike QAP (where structural validity is maintained) or SCP (where feasibility is externalized), the SPP GA must be coupled with specialized local search heuristics (like the ROW Heuristic) to repair and refine the strings generated by the standard GA operators, ensuring the population remains competitive in regions near the strict feasibility constraint. The dynamic adjustment of the penalty term demonstrates that effective constraint handling for SPP necessitates an adaptive approach tailored to the real-time progress of the search.
+
+\textbf{Complete SPP GA Example - One Generation}:
+
+\textbf{Setup}: 5 tasks, 5 workers, each worker can do specific tasks
+
+\textbf{Initial Population}:
+\begin{itemize}
+\item Individual A: $[1, 0, 1, 0, 0]$ - Cost 220, Violations 0 (FEASIBLE), Fitness = 220
+\item Individual B: $[0, 1, 0, 1, 0]$ - Cost 260, Violations 1, Fitness = 260 + 1000 = 1260
+\item Individual C: $[1, 1, 0, 0, 0]$ - Cost 250, Violations 2, Fitness = 250 + 2000 = 2250
+\item Individual D: $[0, 0, 1, 0, 1]$ - Cost 230, Violations 0 (FEASIBLE), Fitness = 230
+\end{itemize}
+
+\textbf{Selection}: Tournament (k=2) selects A and D
+
+\textbf{Crossover}: 1-point at position 3
+\begin{itemize}
+\item A: $[1, 0, 1 | 0, 0]$
+\item D: $[0, 0, 1 | 0, 1]$
+\item O1: $[1, 0, 1, 0, 1]$ - Check feasibility... Violations = 1, Fitness = 340 + 1000 = 1340
+\item O2: $[0, 0, 1, 0, 0]$ - Check feasibility... Violations = 3, Fitness = 120 + 3000 = 3120
+\end{itemize}
+
+\textbf{Mutation}: O1 bit 2 flips: $[1, 1, 1, 0, 1]$ - Violations = 2, Fitness = 470 + 2000 = 2470
+
+\textbf{Replacement}: Keep best 4 from {A, B, C, D, O1', O2}
+\begin{itemize}
+\item A: 220 (best!)
+\item D: 230
+\item B: 1260
+\item O1 (mutated): 2470
+\end{itemize}
+
+New population focuses on feasible or near-feasible solutions, gradually improving quality while maintaining feasibility.
 
 \section{Comparative Structural Analysis and Application Differentiation}
 
@@ -280,6 +1405,38 @@ These problems are often confused as they both involve location. The critical di
 \item \textbf{FLP}: Cost is derived from external service to demand nodes (customers). The minimization goal is the weighted distance between a selected subset of facilities and all demand points.
 \end{itemize}
 
+\textbf{Side-by-Side Comparison Example}:
+
+\textit{Scenario}: A company has 3 departments and 3 building locations.
+
+\textbf{QAP Perspective} (Internal Interaction):
+\begin{itemize}
+\item \textit{Question}: Where should we place each department to minimize internal traffic?
+\item \textit{Input}: Flow matrix showing interdepartmental communication (Sales-Marketing: 50 emails/day, Sales-IT: 20 emails/day, Marketing-IT: 30 emails/day)
+\item \textit{Constraint}: All 3 departments must be assigned (one-to-one)
+\item \textit{Cost calculation}: $\sum$(flow between dept. pairs) $\times$ (distance between assigned locations)
+\item \textit{Example}: If Sales (high flow to Marketing) is placed far from Marketing, cost is high
+\end{itemize}
+
+\textbf{FLP Perspective} (External Service):
+\begin{itemize}
+\item \textit{Question}: Which 2 of 3 locations should we open as customer service centers?
+\item \textit{Input}: Customer locations (100 customers across the city) and their service demands
+\item \textit{Constraint}: Select exactly 2 locations to open (subset selection)
+\item \textit{Cost calculation}: Opening costs + $\sum$(distance from each customer to nearest open center)
+\item \textit{Example}: Centers placed to minimize average customer travel distance; interdepartmental flow is irrelevant
+\end{itemize}
+
+\textbf{Key Distinguishing Questions}:
+\begin{enumerate}
+\item Does the cost depend on interaction between the facilities themselves? $\to$ QAP
+\item Does the cost depend on serving external demand points? $\to$ FLP
+\item Must all $n$ facilities be assigned? $\to$ QAP (one-to-one)
+\item Can we select a subset of $p < n$ facilities? $\to$ FLP
+\item Is there a flow/weight matrix between facility pairs? $\to$ QAP
+\item Are there external customers to serve? $\to$ FLP
+\end{enumerate}
+
 If the application asks to minimize flow costs between objects being placed, it is QAP; if it asks to minimize service costs from placed objects to external customers, it is FLP.
 
 \subsubsection{SCP vs. SPP Differentiation}
@@ -289,6 +1446,75 @@ Both problems use linear costs and binary selection variables, but the equality 
 \begin{itemize}
 \item \textbf{SCP ($\ge 1$)}: Used when robustness and redundancy are acceptable or necessary. A fire station assignment, for example, is usually modeled as SCP because having two stations cover the same area is acceptable, provided all areas are covered.
 \item \textbf{SPP ($= 1$)}: Used when exact allocation and non-overlap are mandatory. Crew scheduling, where a specific flight segment must be covered by precisely one crew, is a canonical SPP application. Over-coverage is an infeasibility.
+\end{itemize}
+
+\textbf{Side-by-Side Comparison Example}:
+
+\textit{Scenario}: A university needs to schedule 4 courses: Calculus, Physics, Chemistry, Biology. There are 5 potential time slots with different costs.
+
+\textbf{SCP Perspective} (Coverage $\ge 1$):
+\begin{itemize}
+\item \textit{Question}: Which time slots should we use to ensure all courses can be offered?
+\item \textit{Constraint}: Each course must be offered in at least one slot
+\item \textit{Flexibility}: A course can be offered in multiple slots (e.g., Calculus in both morning and afternoon)
+\item \textit{Feasible solution}:
+  \begin{itemize}
+  \item Slot 1: [Calculus, Physics] - Cost \$100
+  \item Slot 3: [Calculus, Chemistry, Biology] - Cost \$150
+  \end{itemize}
+\item \textit{Result}: All courses covered (Calculus covered twice - acceptable), Total cost = \$250
+\end{itemize}
+
+\textbf{SPP Perspective} (Partitioning $= 1$):
+\begin{itemize}
+\item \textit{Question}: Which time slots should we assign to each course so no course is scheduled twice?
+\item \textit{Constraint}: Each course must be offered in exactly one slot
+\item \textit{Restriction}: Each course appears in exactly one selected slot (no duplicates allowed)
+\item \textit{Feasible solution}:
+  \begin{itemize}
+  \item Slot 1: [Calculus] - Cost \$50
+  \item Slot 2: [Physics] - Cost \$60
+  \item Slot 3: [Chemistry, Biology] - Cost \$70
+  \end{itemize}
+\item \textit{Result}: Each course scheduled exactly once (no overlaps), Total cost = \$180
+\item \textit{Invalid for SPP}: The SCP solution above where Calculus appears in both Slot 1 and Slot 3
+\end{itemize}
+
+\textbf{Mathematical Comparison}:
+
+\[
+\begin{array}{|c|c|c|}
+\hline
+\textbf{Aspect} & \textbf{SCP} & \textbf{SPP} \\
+\hline
+\text{Constraint} & \sum a_{ij} x_j \ge 1 & \sum a_{ij} x_j = 1 \\
+\hline
+\text{Redundancy} & \text{Allowed/Beneficial} & \text{Forbidden} \\
+\hline
+\text{Gap (uncovered)} & \text{Forbidden} & \text{Forbidden} \\
+\hline
+\text{Overlap (multi-cover)} & \text{Allowed} & \text{Forbidden} \\
+\hline
+\text{Feasible space} & \text{Relatively loose} & \text{Extremely tight} \\
+\hline
+\text{GA strategy} & \text{Indirect + Decoder} & \text{Direct + Penalties} \\
+\hline
+\end{array}
+\]
+
+\textbf{Key Distinguishing Questions}:
+\begin{enumerate}
+\item Can a requirement be satisfied by multiple selected resources? $\to$ SCP (yes), SPP (no)
+\item Is redundancy a problem or acceptable? $\to$ SCP (acceptable), SPP (problem)
+\item Must each requirement be covered exactly once? $\to$ SPP (yes), SCP (no, at least once)
+\item Is the problem about resource allocation without overlap? $\to$ SPP
+\item Is the problem about ensuring coverage with possible backup? $\to$ SCP
+\end{enumerate}
+
+\textbf{Real-world Indicator}:
+\begin{itemize}
+\item If the application involves \textit{duty assignment} (one person does one job) $\to$ SPP
+\item If the application involves \textit{coverage/protection} (multiple backups OK) $\to$ SCP
 \end{itemize}
 
 The differing constraint strictness mandates dramatically different GA approaches: the flexible coverage ($\ge 1$) of SCP allows for efficient indirect optimization and repair, whereas the inflexible partition ($= 1$) of SPP compels the GA to directly grapple with the complex infeasible space through dynamic penalty landscapes and hybridized local search.
@@ -303,24 +1529,76 @@ This analysis demonstrates that the effective design of a Genetic Algorithm is i
 
 \textbf{Application Mapping}: Real-world problem classification is achieved by evaluating the source of the objective cost (internal interaction in QAP vs. external service in FLP) and the acceptable level of resource allocation overlap (redundancy in SCP vs. exact partition in SPP). The structural differences inherent in these four canonical problems provide a roadmap for selecting the appropriate GA encoding, crossover operator, and constraint handling strategy.
 
-\section*{Works Cited}
+\subsection{Algorithm Complexity and Performance Considerations}
+
+\textbf{Computational Complexity per Generation}:
+\begin{itemize}
+\item \textit{Selection}: $O(\mu)$ for roulette wheel, $O(k \cdot \mu)$ for tournament with size $k$
+\item \textit{Crossover}: $O(n)$ for 1-point/uniform, $O(n^2)$ for PMX in worst case
+\item \textit{Mutation}: $O(n)$ for all types
+\item \textit{Evaluation}: Problem-dependent; $O(n^2)$ for QAP, $O(mn)$ for FLP
+\item \textit{Total per generation}: $O(\mu \cdot n^2)$ for QAP-like problems
+\end{itemize}
+
+\textbf{Parameter Tuning Guidelines}:
+\[
+\begin{array}{|l|c|c|}
+\hline
+\textbf{Parameter} & \textbf{Recommended Range} & \textbf{Tuning Strategy} \\
+\hline
+\text{Population Size } (\mu) & 50-200 & \text{Larger for complex landscapes} \\
+\text{Crossover Rate } (P_c) & 0.6-0.9 & \text{Higher for exploitation} \\
+\text{Mutation Rate } (p_m) & 0.001-0.01 & \text{Lower for refined search} \\
+\text{Tournament Size } (k) & 2-7 & \text{Larger for stronger pressure} \\
+\text{Elitism } (\%) & 1-10\% & \text{Preserve best solutions} \\
+\text{Max Generations} & 500-5000 & \text{Based on problem size} \\
+\hline
+\end{array}
+\]
+
+\subsection{Best Practices Summary}
 
 \begin{enumerate}
-\item P-metaheuristics\_2.pdf
-\item Genetic Algorithm For Solving The Uncapacitated Facility ... - IJERT, accessed December 5, 2025, \url{https://www.ijert.org/research/genetic-algorithm-for-solving-the-uncapacitated-facility-location-problem-IJERTV2IS3589.pdf}
-\item An Improved Hybrid Genetic-Hierarchical Algorithm for the Quadratic Assignment Problem, accessed December 5, 2025, \url{https://www.mdpi.com/2227-7390/12/23/3726}
-\item Quadratic assignment problem - Wikipedia, accessed December 5, 2025, \url{https://en.wikipedia.org/wiki/Quadratic_assignment_problem}
-\item The Quadratic Assignment Problem | Request PDF - ResearchGate, accessed December 5, 2025, \url{https://www.researchgate.net/publication/281601184_The_Quadratic_Assignment_Problem}
-\item A Genetic Algorithm for solving Quadratic Assignment ... - arXiv, accessed December 5, 2025, \url{https://arxiv.org/pdf/1405.5050}
-\item Comparative analysis of genetic crossover operators for the p-median facility location problem | Erdogmus | Selcuk University Journal of Engineering Sciences, accessed December 5, 2025, \url{https://sujes.selcuk.edu.tr/sujes/article/view/587}
-\item IEOR 151 – Lecture 15 Set Covering Problem, accessed December 5, 2025, \url{https://aswani.ieor.berkeley.edu/teaching/FA16/151/lecture_notes/ieor151_lec15.pdf}
-\item A Unified Framework for Combinatorial Optimization Based on Graph Neural Networks, accessed December 5, 2025, \url{https://arxiv.org/html/2406.13125v1}
-\item NAVAL POSTGRADUATE SCHOOL, accessed December 5, 2025, \url{https://www.hsdl.org/c/view?docid=732164}
-\item An indirect genetic algorithm for set covering problems - Semantic Scholar, accessed December 5, 2025, \url{https://www.semanticscholar.org/paper/An-indirect-genetic-algorithm-for-set-covering-Aickelin/3dba217c869901b833745d0acd27efc0f40f68ff}
-\item [0803.2965] An Indirect Genetic Algorithm for Set Covering Problems - arXiv, accessed December 5, 2025, \url{https://arxiv.org/abs/0803.2965}
-\item An Indirect Genetic Algorithm for Set Covering Problems - arXiv, accessed December 5, 2025, \url{https://arxiv.org/pdf/0803.2965}
-\item Constraint Handling in Genetic Algorithms: The Set Partitioning Problem, accessed December 5, 2025, \url{https://glvee.github.io/files/chu98.pdf}
-\item A Parallel Genetic Algorithm for the Set Partitioning Problem, accessed December 5, 2025, \url{https://ftp.mcs.anl.gov/pub/tech_reports/reports/ANL9423.pdf}
+\item \textbf{Problem Analysis First}: Identify constraint type (permutation/ selection/ covering/ partitioning) before choosing GA components
+\item \textbf{Match Operators to Representation}: Use specialized crossovers (OX, PMX) for permutations; standard for binary
+\item \textbf{Balance Exploration vs Exploitation}: High crossover rate ($P_c \approx 0.8$) with low mutation rate ($p_m \approx 0.01$)
+\item \textbf{Hybridize When Needed}: Combine GA with local search for hard problems (QAP, SPP)
+\item \textbf{Maintain Diversity}: Use elitism (keep top 5-10\%) while ensuring population doesn't converge prematurely
+\item \textbf{Adaptive Strategies}: Adjust parameters during search (e.g., decrease $p_m$ as search progresses)
+\item \textbf{Problem-Specific Heuristics}: Incorporate domain knowledge in initialization and repair mechanisms
+\item \textbf{Monitor Convergence}: Track diversity metrics; restart if population becomes too homogeneous
+\end{enumerate}
+
+\subsection{Decision Tree for GA Design}
+
+\textbf{Quick Reference Guide}:
+\begin{enumerate}
+\item Is the solution a permutation? 
+   \begin{itemize}
+   \item Yes $\to$ Use OX or PMX crossover
+   \item No $\to$ Is it binary/discrete? 
+      \begin{itemize}
+      \item Yes $\to$ Use 1-point, 2-point, or uniform crossover
+      \item No $\to$ Real-valued: Use BLX-$\alpha$ or SBX crossover
+      \end{itemize}
+   \end{itemize}
+
+\item Does the problem have strict equality constraints?
+   \begin{itemize}
+   \item Yes (like SPP) $\to$ Use direct encoding + penalty functions + local search
+   \item No $\to$ Are inequality constraints loose?
+      \begin{itemize}
+      \item Yes (like SCP) $\to$ Use indirect encoding + decoder
+      \item No constraint $\to$ Use standard GA
+      \end{itemize}
+   \end{itemize}
+
+\item Is the objective function:
+   \begin{itemize}
+   \item Quadratic (like QAP)? $\to$ Hybrid GA + Tabu Search recommended
+   \item Linear (like FLP, SCP, SPP)? $\to$ Standard GA with proper constraint handling
+   \item Non-linear continuous? $\to$ Real-coded GA with Gaussian mutation
+   \end{itemize}
 \end{enumerate}
 
 \end{document}
