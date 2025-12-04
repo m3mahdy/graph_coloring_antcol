@@ -1,0 +1,23 @@
+{
+  "trial_number": 7,
+  "timestamp": "2025-12-01T06:07:05.302712",
+  "parameters": {
+    "iterations": 286,
+    "alpha": 1.583820449155001,
+    "beta": 4.706346676505426,
+    "rho": 0.07576185933272309,
+    "ant_count": 52,
+    "Q": 4.412379327813933,
+    "patience": 0.5186129976887949
+  },
+  "objective_value": 207.0,
+  "total_color_count": 207.0,
+  "graphs": {
+    "gc_500_9": {
+      "graph_size": 500,
+      "color_count": 207,
+      "iterations_used": 286,
+      "elapsed_time": 20338.704547166824
+    }
+  }
+}
