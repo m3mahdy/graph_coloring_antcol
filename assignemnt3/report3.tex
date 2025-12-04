@@ -184,22 +184,22 @@ The complete ACO algorithm for graph coloring is formalized below in two compone
     \item Initialize pheromone matrix $\tau[v][c] \leftarrow 1.0$ for all $v \in V$, $c \in \{1, \dots, k_{max}\}$.
     \item $S_{best} \leftarrow \text{None}$, $k_{best} \leftarrow \infty$, $no\_improve \leftarrow 0$.
     \item \textbf{For} $iter = 1$ \textbf{to} $T$ \textbf{Do}
-    \item \hspace{1em} \textbf{// Parallel Ant Construction Phase}
-    \item \hspace{1em} \textbf{For} $ant = 1$ \textbf{to} $m$ \textbf{Do (in parallel)}
-    \item \hspace{2em} $S_{ant} \leftarrow $ ConstructSolution($G$, $\tau$, $\alpha$, $\beta$)
-    \item \hspace{2em} $k_{ant} \leftarrow $ CountColors($S_{ant}$)
-    \item \hspace{1em} \textbf{End For}
-    \item \hspace{1em} \textbf{// Find Iteration-Best Solution}
-    \item \hspace{1em} $S_{iter} \leftarrow \argmin_{ant} k_{ant}$, $k_{iter} \leftarrow \min_{ant} k_{ant}$
-    \item \hspace{1em} \textbf{If} $k_{iter} < k_{best}$ \textbf{Then}
-    \item \hspace{2em} $S_{best} \leftarrow S_{iter}$, $k_{best} \leftarrow k_{iter}$, $no\_improve \leftarrow 0$
-    \item \hspace{1em} \textbf{Else}
-    \item \hspace{2em} $no\_improve \leftarrow no\_improve + 1$
-    \item \hspace{1em} \textbf{// Pheromone Update}
-    \item \hspace{1em} $\tau[v][c] \leftarrow (1-\rho) \cdot \tau[v][c]$ for all $v, c$ \quad // Evaporation
-    \item \hspace{1em} \textbf{For each} $(v, c) \in S_{iter}$ \textbf{Do}
-    \item \hspace{2em} $\tau[v][c] \leftarrow \tau[v][c] + Q / k_{iter}$ \quad // Reinforcement
-    \item \hspace{1em} \textbf{If} $no\_improve \geq p \cdot T$ \textbf{Then} \textbf{Break} \quad // Early stopping
+    \item \hspace{2em} \textbf{// Parallel Ant Construction Phase}
+    \item \hspace{2em} \textbf{For} $ant = 1$ \textbf{to} $m$ \textbf{Do (in parallel)}
+    \item \hspace{4em} $S_{ant} \leftarrow $ ConstructSolution($G$, $\tau$, $\alpha$, $\beta$)
+    \item \hspace{4em} $k_{ant} \leftarrow $ CountColors($S_{ant}$)
+    \item \hspace{2em} \textbf{End For}
+    \item \hspace{2em} \textbf{// Find Iteration-Best Solution}
+    \item \hspace{2em} $S_{iter} \leftarrow \argmin_{ant} k_{ant}$, $k_{iter} \leftarrow \min_{ant} k_{ant}$
+    \item \hspace{2em} \textbf{If} $k_{iter} < k_{best}$ \textbf{Then}
+    \item \hspace{4em} $S_{best} \leftarrow S_{iter}$, $k_{best} \leftarrow k_{iter}$, $no\_improve \leftarrow 0$
+    \item \hspace{2em} \textbf{Else}
+    \item \hspace{4em} $no\_improve \leftarrow no\_improve + 1$
+    \item \hspace{2em} \textbf{// Pheromone Update}
+    \item \hspace{2em} $\tau[v][c] \leftarrow (1-\rho) \cdot \tau[v][c]$ for all $v, c$ \quad // Evaporation
+    \item \hspace{2em} \textbf{For each} $(v, c) \in S_{iter}$ \textbf{Do}
+    \item \hspace{4em} $\tau[v][c] \leftarrow \tau[v][c] + Q / k_{iter}$ \quad // Reinforcement
+    \item \hspace{2em} \textbf{If} $no\_improve \geq p \cdot T$ \textbf{Then} \textbf{Break} \quad // Early stopping
     \item \textbf{End For}
     \item \textbf{Return} $S_{best}$, $k_{best}$
 \end{enumerate}
@@ -211,16 +211,16 @@ The complete ACO algorithm for graph coloring is formalized below in two compone
     \item $S \leftarrow \{\}$, $used\_colors \leftarrow \{\}$.
     \item $order \leftarrow $ RandomPermutation($V$) \quad // Random node visitation order
     \item \textbf{For each} $v \in order$ \textbf{Do}
-    \item \hspace{1em} $neighbor\_colors \leftarrow \{S[u] : u \in N(v), u \in S\}$
-    \item \hspace{1em} $valid\_colors \leftarrow \{c : c \notin neighbor\_colors\}$ \quad // No conflicts
-    \item \hspace{1em} \textbf{If} $valid\_colors = \emptyset$ \textbf{Then} \quad // Expand color set
-    \item \hspace{2em} Add new color to $\tau$ and $valid\_colors$
-    \item \hspace{1em} \textbf{For each} $c \in valid\_colors$ \textbf{Do}
-    \item \hspace{2em} $\eta[c] \leftarrow 2.0$ if $c \in used\_colors$ else $1.0$ \quad // Heuristic
-    \item \hspace{2em} $score[c] \leftarrow [\tau[v][c]]^{\alpha} \cdot [\eta[c]]^{\beta}$
-    \item \hspace{1em} $P[c] \leftarrow score[c] / \sum_{c'} score[c']$ \quad // Normalize probabilities
-    \item \hspace{1em} $c_{chosen} \leftarrow $ SampleColor($valid\_colors$, $P$) \quad // Probabilistic selection
-    \item \hspace{1em} $S[v] \leftarrow c_{chosen}$, $used\_colors \leftarrow used\_colors \cup \{c_{chosen}\}$
+    \item \hspace{2em} $neighbor\_colors \leftarrow \{S[u] : u \in N(v), u \in S\}$
+    \item \hspace{2em} $valid\_colors \leftarrow \{c : c \notin neighbor\_colors\}$ \quad // No conflicts
+    \item \hspace{2em} \textbf{If} $valid\_colors = \emptyset$ \textbf{Then} \quad // Expand color set
+    \item \hspace{4em} Add new color to $\tau$ and $valid\_colors$
+    \item \hspace{2em} \textbf{For each} $c \in valid\_colors$ \textbf{Do}
+    \item \hspace{4em} $\eta[c] \leftarrow 2.0$ if $c \in used\_colors$ else $1.0$ \quad // Heuristic
+    \item \hspace{4em} $score[c] \leftarrow [\tau[v][c]]^{\alpha} \cdot [\eta[c]]^{\beta}$
+    \item \hspace{2em} $P[c] \leftarrow score[c] / \sum_{c'} score[c']$ \quad // Normalize probabilities
+    \item \hspace{2em} $c_{chosen} \leftarrow $ SampleColor($valid\_colors$, $P$) \quad // Probabilistic selection
+    \item \hspace{2em} $S[v] \leftarrow c_{chosen}$, $used\_colors \leftarrow used\_colors \cup \{c_{chosen}\}$
     \item \textbf{End For}
     \item \textbf{Return} $S$
 \end{enumerate}
@@ -325,7 +325,7 @@ The model was implemented using the \textbf{Python} programming language (versio
     \item \textbf{Pandas:} Data manipulation and analysis for results processing and statistical computations.
     \item \textbf{Matplotlib \& Seaborn:} Used for generating all visual aids, including comparison charts, convergence graphs, and optimization history plots.
 \end{itemize}
-All experiments were conducted on a local machine running macOS with an Intel(R) Core(TM) i7 processor (3.40 GHz) and 32.0 GB of RAM. The implementation is available in the \texttt{code/} directory with modular structure for reproducibility.
+All experiments were conducted on a cloud server running Ubuntu Linux (6.8.0-71-generic kernel) with an AMD EPYC processor (8 cores, 2.79 GHz base frequency) and 24 GB of RAM.
 
 \subsection{Parameter Tuning}
 An \textbf{automated hyperparameter optimization} strategy was employed using the Optuna framework. The optimization objective was to minimize the total number of colors across all tuning dataset instances while maintaining zero conflicts. The process involved:
@@ -333,8 +333,9 @@ An \textbf{automated hyperparameter optimization} strategy was employed using th
 \begin{itemize}
     \item \textbf{Optimization Framework:} Optuna's Tree-structured Parzen Estimator (TPE) sampler
     \item \textbf{Number of Trials:} 40 independent optimization trials
+    \item \textbf{Parallel Execution:} 6 parallel workers (n\_jobs=6)
     \item \textbf{Tuning Dataset:} Single graph instance (gc\_500\_9) to reduce computational cost
-    \item \textbf{Optimization Duration:} Approximately 130 hours of computation
+    \item \textbf{Optimization Duration:} 46 hours wall-clock time (225 hours total computational time across all trials)
     \item \textbf{Objective:} Minimize sum of colors across all test instances
 \end{itemize}
 
@@ -371,7 +372,7 @@ Patience Ratio & [0.3, 0.8] & 0.577 \\
     \item \textbf{Patience Ratio:} Fraction of total iterations to wait without improvement before early stopping. Optimal: 0.577 (approximately 150 iterations patience).
 \end{itemize}
 
-The extensive hyperparameter optimization process (Figure~\ref{fig:optuna_history}) consumed approximately 130 hours of computation across 40 trials, ultimately converging on trial 19 with 200 colors as the best configuration. This optimization journey revealed critical insights into ACO's behavior for graph coloring. The tuning process demonstrated that \textbf{high beta} (strong heuristic influence) and \textbf{low rho} (slow evaporation) were essential for performance, fundamentally emphasizing intensification over diversification—a counterintuitive finding for a metaheuristic typically valued for exploration capabilities.
+The extensive hyperparameter optimization process (Figure~\ref{fig:optuna_history}) was conducted over 46 hours using 6 parallel workers, executing 40 trials that accumulated 225 hours of total computational time. The optimization started with initial trials achieving 215 colors and progressively improved, ultimately converging on trial 19 with 200 colors as the best configuration—a 7\% improvement (15-color reduction). This optimization journey revealed critical insights into ACO's behavior for graph coloring. The tuning process demonstrated that \textbf{high beta} (strong heuristic influence) and \textbf{low rho} (slow evaporation) were essential for performance, fundamentally emphasizing intensification over diversification—a counterintuitive finding for a metaheuristic typically valued for exploration capabilities.
 
 \begin{figure}[H]
     \centering
@@ -475,7 +476,7 @@ The ACO algorithm's performance is evaluated against two baseline methods for co
 
 \textbf{Table 1:} Comprehensive performance comparison across three algorithmic paradigms. Best-Known Solutions (BKS): dsjc250.5=28, dsjc500.9=126, dsjc1000.5=85.
 
-The comparative performance analysis (Figures~\ref{fig:comparison_best} and~\ref{fig:comparison_avg}) reveals a striking pattern: ACO consistently underperforms both baseline methods across all test instances, challenging the expectation that metaheuristics should outperform simple constructive approaches. Examining best-case performance (Figure~\ref{fig:comparison_best}), ACO produces 96-166\% more colors than the best-known solutions, while Tabu Search achieves only 21-46\% deviation. More concerning, ACO even trails the deterministic Greedy algorithm on some instances, suggesting fundamental algorithmic limitations rather than mere parameter tuning issues.
+The comparative performance analysis (Figures~\ref{fig:comparison_best} and~\ref{fig:comparison_avg}) reveals a striking pattern: ACO consistently underperforms both baseline methods across all test instances, challenging the expectation that metaheuristics should outperform simple constructive approaches. Examining best-case performance (Figure~\ref{fig:comparison_best}), ACO produces 58-166\% more colors than the best-known solutions, while Tabu Search achieves only 21-46\% deviation. More concerning, ACO even trails the deterministic Greedy algorithm on some instances, suggesting fundamental algorithmic limitations rather than mere parameter tuning issues.
 
 \begin{figure}[H]
     \centering
@@ -484,7 +485,7 @@ The comparative performance analysis (Figures~\ref{fig:comparison_best} and~\ref
     \label{fig:comparison_best}
 \end{figure}
 
-The average performance over three runs (Figure~\ref{fig:comparison_avg}) exposes an additional scalability problem: the performance gap between ACO and Tabu Search widens dramatically as graph size increases. On dsjc250.5 (250 vertices), ACO uses approximately 55 colors versus TS's 34 colors—a 62\% increase. However, on dsjc1000.5 (1000 vertices), ACO requires 119 colors versus TS's 53 colors—a 125\% increase. This non-linear degradation indicates that ACO's population-based constructive approach struggles increasingly with larger problem instances, likely due to pheromone signal dilution across the expanding solution space. The consistency metrics further reveal that while ACO shows low standard deviation (indicating reproducible results), it reproducibly achieves poor solutions—consistency without quality provides little practical value.
+The average performance over three runs (Figure~\ref{fig:comparison_avg}) exposes an additional scalability problem: the performance gap between ACO and Tabu Search widens dramatically as graph size increases. On dsjc250.5 (250 vertices), ACO uses approximately 56 colors versus TS's 35 colors—a 61\% increase. However, on dsjc1000.5 (1000 vertices), ACO requires 227 colors versus TS's 125 colors—an 82\% increase. This non-linear degradation indicates that ACO's population-based constructive approach struggles increasingly with larger problem instances, likely due to pheromone signal dilution across the expanding solution space. The consistency metrics further reveal that while ACO shows low standard deviation (indicating reproducible results), it reproducibly achieves poor solutions—consistency without quality provides little practical value.
 
 \begin{figure}[H]
     \centering
@@ -508,7 +509,7 @@ The Greedy algorithm serves as the fast constructive baseline:
 Tabu Search demonstrates superior optimization capability:
 \begin{itemize}
     \item \textbf{Quality:} Consistently achieves best solution quality across all instances (21-46\% deviation from BKS).
-    \item \textbf{Improvement:} 32-59\% better than Greedy, 61-73\% better than ACO in terms of color count.
+    \item \textbf{Improvement:} 0.3-17.5\% better than Greedy, 17.5-45.1\% better than ACO in terms of color count.
     \item \textbf{Time Cost:} High computational cost (926-10,026 seconds), 10,000-40,000× slower than Greedy.
     \item \textbf{Robustness:} Good consistency (std 0.58-2.00) across multiple runs.
     \item \textbf{Mechanism:} Benefits from starting with Greedy solution and systematically improving through iterative color reduction strategy.
@@ -517,11 +518,11 @@ Tabu Search demonstrates superior optimization capability:
 \subsubsection{ACO - Population-Based Approach}
 ACO demonstrates distinct characteristics as a constructive population-based method:
 \begin{itemize}
-    \item \textbf{Quality:} Poorest solution quality among all three methods (58-166\% deviation from BKS).
+    \item \textbf{Quality:} Poorest solution quality among all three methods (58-167\% deviation from BKS).
     \item \textbf{Constructive Limitation:} Struggles with color minimization because it builds solutions without the benefit of initial feasible colorings or iterative improvement.
     \item \textbf{Time Efficiency:} Comparable to or better than TS (1134-13,670 seconds) despite parallel ant execution.
     \item \textbf{Consistency:} Moderate robustness (std 0.58-2.52) showing stable but sub-optimal convergence.
-    \item \textbf{Scalability:} Performance degradation increases with graph size (167\% deviation on dsjc1000.5 vs 96\% on dsjc250.5).
+    \item \textbf{Scalability:} Performance degradation increases with graph size (167\% deviation on dsjc1000.5 vs 99\% on dsjc250.5).
 \end{itemize}
 
 \subsection{Detailed Discussion and Insights}
