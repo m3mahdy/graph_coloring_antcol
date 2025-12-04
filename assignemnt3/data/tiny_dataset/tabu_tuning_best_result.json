@@ -4,11 +4,31 @@
         "best_known_colors": 2
     },
     {
+        "graph_name": "gc_250_9",
+        "best_known_colors": 85
+    },
+    {
         "graph_name": "gc_50_9",
         "best_known_colors": 21
     },
-       {
+    {
         "graph_name": "gc_20_9",
         "best_known_colors": 10
+    },
+    {
+        "graph_name": "gc_1000_7",
+        "best_known_colors": 195
+    },
+    {
+        "graph_name": "gc_500_9",
+        "best_known_colors": 162
+    },
+    {
+        "graph_name": "gc_100_9",
+        "best_known_colors": 38
+    },
+    {
+        "graph_name": "gc_70_9",
+        "best_known_colors": 28
     }
 ]
