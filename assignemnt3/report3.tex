@@ -144,8 +144,8 @@ The ACO algorithm for graph coloring operates through the following key mechanis
     
     \item \textbf{Constructive Solution Building:} Each ant constructs a complete valid coloring from scratch by:
     \begin{enumerate}
-        \item Starting from a randomly assigned node
-        \item Visiting remaining nodes in random order
+        \item Starting from its assigned starting node (distributed to ensure coverage)
+        \item Visiting remaining nodes in shuffled random order for diversity
         \item For each uncolored node, selecting a color probabilistically based on:
         \begin{itemize}
             \item \textbf{Pheromone level} ($\tau^{\alpha}$): Higher pheromone = more attractive
@@ -166,7 +166,7 @@ The ACO algorithm for graph coloring operates through the following key mechanis
     $$\tau[v][c] \leftarrow \tau[v][c] + \frac{Q}{k_{best}}$$
     where $Q$ is the deposit intensity parameter and $k_{best}$ is the number of colors used. Better solutions (fewer colors) receive stronger reinforcement.
     
-    \item \textbf{Parallel Ant Execution:} Multiple ants construct solutions concurrently using multi-threading, significantly improving computational efficiency while maintaining solution diversity through randomized starting nodes and visitation orders.
+    \item \textbf{Parallel Ant Execution:} Multiple ants construct solutions concurrently using multi-threading, significantly improving computational efficiency while maintaining solution diversity through randomized starting nodes and visitation orders. When ant count exceeds node count, all nodes are assigned first to ensure full graph coverage, with remaining ants randomly assigned.
     
     \item \textbf{Global Best Tracking:} The algorithm maintains the best solution found across all iterations, returning the global optimum when terminated.
     
@@ -207,9 +207,12 @@ The complete ACO algorithm for graph coloring is formalized below in two compone
 \vspace{1em}
 \textbf{Algorithm 2: ConstructSolution (Single Ant)}
 \begin{enumerate}
-    \item \textbf{Input:} Graph $G$, pheromone matrix $\tau$, parameters $\alpha$, $\beta$.
+    \item \textbf{Input:} Graph $G$, pheromone matrix $\tau$, parameters $\alpha$, $\beta$, starting node $v_{start}$.
     \item $S \leftarrow \{\}$, $used\_colors \leftarrow \{\}$.
-    \item $order \leftarrow $ RandomPermutation($V$) \quad // Random node visitation order
+    \item $order \leftarrow [v_{start}]$ \quad // Start from assigned node
+    \item $remaining \leftarrow V \setminus \{v_{start}\}$
+    \item Shuffle($remaining$) \quad // Randomize order of remaining nodes
+    \item $order \leftarrow order + remaining$ \quad // Append shuffled nodes
     \item \textbf{For each} $v \in order$ \textbf{Do}
     \item \hspace{2em} $neighbor\_colors \leftarrow \{S[u] : u \in N(v), u \in S\}$
     \item \hspace{2em} $valid\_colors \leftarrow \{c : c \notin neighbor\_colors\}$ \quad // No conflicts
@@ -328,7 +331,7 @@ The model was implemented using the \textbf{Python} programming language (versio
 All experiments were conducted on a cloud server running Ubuntu Linux (6.8.0-71-generic kernel) with an AMD EPYC processor (8 cores, 2.79 GHz base frequency) and 24 GB of RAM.
 
 \subsection{Parameter Tuning}
-An \textbf{automated hyperparameter optimization} strategy was employed using the Optuna framework. The optimization objective was to minimize the total number of colors across all tuning dataset instances while maintaining zero conflicts. The process involved:
+An \textbf{automated hyperparameter optimization} strategy was employed using the Optuna framework. The optimization objective was to minimize the number of colors on the tuning graph while maintaining zero conflicts. The process involved:
 
 \begin{itemize}
     \item \textbf{Optimization Framework:} Optuna's Tree-structured Parzen Estimator (TPE) sampler
@@ -397,7 +400,7 @@ Deeper analysis through parameter slice plots (Figure~\ref{fig:optuna_slice}) an
     \label{fig:optuna_importance}
 \end{figure}
 
-The best trial configuration (trial 19) successfully produced a valid conflict-free coloring of the tuning instance gc\_500\_9, as visualized in Figure~\ref{fig:best_trial}. This visualization confirms that despite the constructive approach's limitations in minimizing colors, the pheromone-guided construction mechanism effectively maintains feasibility by avoiding conflicts. The coloring demonstrates clear neighborhood patterns where adjacent vertices consistently receive different colors, validating the algorithm's constraint satisfaction capability even if color minimization remains suboptimal.
+The best trial configuration (trial 19) successfully produced a valid conflict-free coloring (zero conflicts) of the tuning instance gc\_500\_9 with 200 colors, as visualized in Figure~\ref{fig:best_trial}. This visualization confirms that despite the constructive approach's limitations in minimizing colors, the pheromone-guided construction mechanism effectively maintains feasibility by avoiding conflicts. The coloring demonstrates clear neighborhood patterns where adjacent vertices consistently receive different colors, validating the algorithm's constraint satisfaction capability even if color minimization remains suboptimal.
 
 \begin{figure}[H]
     \centering
