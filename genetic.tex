@@ -5,6 +5,7 @@
 \usepackage{graphicx}
 \usepackage{hyperref}
 \usepackage{booktabs}
+\usepackage{tabularx}
 \usepackage{geometry}
 \geometry{margin=1in}
 
@@ -108,13 +109,17 @@ It is important to note that while these specialized operators guarantee validit
 \begin{table}[ht]
 \centering
 \caption{Comparison of Core Crossover Operators}
-\begin{tabular}{lllll}
+\small
+\begin{tabular}{p{2.5cm}p{2cm}p{3cm}p{2.8cm}p{3cm}}
 \toprule
-\textbf{Operator Type} & \textbf{Representation} & \textbf{Core Mechanism} & \textbf{Feasibility Maintenance} & \textbf{Disruptiveness/Locality} \\
+\textbf{Operator Type} & \textbf{Representation} & \textbf{Core Mechanism} & \textbf{Feasibility Maintenance} & \textbf{Disruptiveness/ Locality} \\
 \midrule
-1-Point/N-Point & Binary/Discrete & Segmental exchange based on cut points & High (for unconstrained representations) & Moderate structural block inheritance \\
-Uniform Crossover & Binary/Discrete & Gene-by-gene source selection (mask) & High (for unconstrained representations) & High; low structural block inheritance \\
+1-Point/N-Point & Binary/ Discrete & Segmental exchange based on cut points & High (for unconstrained representations) & Moderate structural block inheritance \\
+\midrule
+Uniform Crossover & Binary/ Discrete & Gene-by-gene source selection (mask) & High (for unconstrained representations) & High; low structural block inheritance \\
+\midrule
 Order Crossover (OX) & Permutation & Preserve P1 segment; maintain P2 relative order & Always guaranteed (valid permutation) & High (due to re-ordering of remaining elements) \\
+\midrule
 PMX & Permutation & Mapping based on matching section & Always guaranteed (valid permutation) & High (due to positional conflict resolution) \\
 \bottomrule
 \end{tabular}
@@ -244,13 +249,17 @@ The primary distinction lies in the nature of the objective function (quadratic 
 \begin{table}[ht]
 \centering
 \caption{Comparative Analysis of Combinatorial Problems and GA Strategy}
-\begin{tabular}{lllll}
+\small
+\begin{tabular}{p{1.5cm}p{2.2cm}p{2.2cm}p{2.2cm}p{4cm}}
 \toprule
 \textbf{Problem} & \textbf{Objective Function Type} & \textbf{Core Constraint Type} & \textbf{Primary GA Encoding} & \textbf{Feasibility Strategy} \\
 \midrule
 QAP & Quadratic Minimization & Assignment (Permutation) & Permutation & Internal structural maintenance (OX, PMX) \\
-FLP (P-Median) & Linear Minimization & Selection ($|X|=p$) & Binary/Discrete & Standard operators with constraint repair \\
+\midrule
+FLP (P-Median) & Linear Minimization & Selection ($|X|=p$) & Binary/ Discrete & Standard operators with constraint repair \\
+\midrule
 SCP & Linear Minimization & Coverage ($\ge 1$) & Indirect (Permutation) & External Decoder/Repair (DROP/ADD) \\
+\midrule
 SPP & Linear Minimization & Partitioning ($= 1$) & Direct Binary String & Augmented Fitness Function (Adaptive Penalties) + Local Search \\
 \bottomrule
 \end{tabular}
