@@ -1,0 +1,31 @@
+\frametitle{ACO Algorithm Pseudocode}
+\begin{algorithm}[H]
+\begin{algorithmic}[1]
+\tiny
+\STATE \textbf{Initialize:} pheromone matrix $\tau[v][c] \leftarrow \tau_0$
+\FOR{iteration = 1 to max\_iterations}
+    \STATE solutions $\leftarrow$ []
+    \FOR{ant = 1 to m (parallel)}  \textit{\textcolor{gray}{// Ant Solution Construction}}
+        \STATE solution $\leftarrow$ \{\}
+        \STATE vertices $\leftarrow$ shuffle(V)
+        \FOR{each $v$ in vertices}  \textit{\textcolor{gray}{// Sequential vertex coloring}}
+            \STATE valid\_colors $\leftarrow$ \{$c$ : no neighbor uses $c$\}
+            \IF{valid\_colors is empty}
+                \STATE valid\_colors $\leftarrow$ \{new color\}
+            \ENDIF
+            \STATE $\eta[c] \leftarrow 2.0$ if $c$ used, else $1.0$  \textit{\textcolor{gray}{// Heuristic}}
+            \STATE $P(c) \leftarrow \frac{[\tau[v][c]]^{\alpha} \cdot [\eta[c]]^{\beta}}{\sum_{c'} [\tau[v][c']]^{\alpha} \cdot [\eta[c']]^{\beta}}$  \textit{\textcolor{gray}{// Probability}}
+            \STATE solution[$v$] $\leftarrow$ select $c$ with probability $P(c)$
+        \ENDFOR
+        \STATE solutions.append(solution)
+    \ENDFOR
+    \STATE best\_solution $\leftarrow$ argmin(solutions)  \textit{\textcolor{gray}{// Select iteration best}}
+    \STATE \textbf{Evaporate:} $\tau[v][c] \leftarrow (1-\rho) \cdot \tau[v][c]$ for all $v, c$
+    \STATE \textbf{Deposit:} $\tau[v][c] \leftarrow \tau[v][c] + \frac{Q}{\text{num\_colors}}$ for $(v,c)$ in best\_solution
+    \IF{no improvement for patience $\times$ max\_iterations}
+        \STATE \textbf{break}  \textit{\textcolor{gray}{// Early stopping}}
+    \ENDIF
+\ENDFOR
+\STATE \textbf{return} best solution found
+\end{algorithmic}
+\end{algorithm}
