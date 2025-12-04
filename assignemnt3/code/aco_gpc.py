@@ -453,10 +453,10 @@ class ACOGraphColoring:
         # Store as initial best solution
         self.best_global_solution = solution
         
-        return solution
-        
         # Apply pheromone bounds after seeding
         self._apply_pheromone_bounds()
+        
+        return solution
 
     def _get_node_ordering(self, start_node, solution, iteration=0, ant_id=0, forced_strategy=None):
         """
@@ -570,6 +570,7 @@ class ACOGraphColoring:
                 # Greedy ants use forced_strategy for systematic coverage
                 nodes_order = self._get_node_ordering(start_node, solution, iteration, ant_id, forced_strategy)
                 if not nodes_order:
+                    # All nodes colored or error - exit loop
                     break
                 node = nodes_order[0]
             
@@ -1149,7 +1150,7 @@ class ACOGraphColoring:
                     tabu_info = f" - 🏆 Better than Tabu: {self.tabu_best} ({diff})"
             
             # esstinal output, not tied to verbose - print iterations progress
-            if iteration % 10 == 0:
+            if iteration % 100 == 0:
                 print(f"💬 {prefix}Iteration {iteration}/{self.iterations}: "
                         f"iter_best={iter_best['num_colors']}, "
                         f"global_best={best_global_colors}{tabu_info}")
@@ -1167,8 +1168,7 @@ class ACOGraphColoring:
                 }
         
         # Print newline after progress updates
-        if self.verbose:
-            print()
+        print()
         
         return {
             'solution': self.best_global_solution,
