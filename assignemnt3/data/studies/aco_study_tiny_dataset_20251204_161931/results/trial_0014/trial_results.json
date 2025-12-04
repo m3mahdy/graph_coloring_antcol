@@ -1,0 +1,36 @@
+{
+  "trial_number": 14,
+  "timestamp": "2025-12-04T16:43:58.246603",
+  "parameters": {
+    "iterations": 168,
+    "alpha": 2.996780903946363,
+    "beta": 1.0231136248400348,
+    "rho": 0.21737029490239265,
+    "ant_count": 100,
+    "Q": 3.119858351189132,
+    "patience": 0.523738273211539,
+    "exploitation_ratio": 0.3127007156411005,
+    "color_preference_weight": 5.144656258374527,
+    "constraint_penalty_weight": 0.07265105770632078,
+    "min_pheromone": 0.0701264864267446,
+    "max_pheromone": 10.83906936110212,
+    "num_strategies": 3,
+    "use_warmup": true
+  },
+  "objective_value": 33.0,
+  "total_color_count": 33.0,
+  "graphs": {
+    "gc_20_9": {
+      "graph_size": 20,
+      "color_count": 11,
+      "iterations_used": 87,
+      "elapsed_time": 94.38917589187622
+    },
+    "gc_50_9": {
+      "graph_size": 50,
+      "color_count": 22,
+      "iterations_used": 87,
+      "elapsed_time": 245.4760446548462
+    }
+  }
+}

@@ -1,0 +1,90 @@
+{
+  "completed": true,
+  "timestamp": "2025-12-04 17:10:35",
+  "aco_params": {
+    "iterations": 570,
+    "alpha": 2.643758337847659,
+    "beta": 1.0511555179963052,
+    "rho": 0.15874788910789756,
+    "ant_count": 93,
+    "Q": 3.1236696831649824,
+    "patience": 0.844118738585755
+  },
+  "best_known": {
+    "gc_4_1": 2,
+    "gc_250_9": 85,
+    "gc_50_9": 21,
+    "gc_20_9": 10,
+    "gc_1000_7": 195,
+    "gc_500_9": 162,
+    "gc_100_9": 38,
+    "gc_70_9": 28
+  },
+  "results": [
+    {
+      "graph": "gc_70_9",
+      "algorithm": "greedy",
+      "repetition": 1,
+      "color_count": 32,
+      "conflict_count": 0,
+      "execution_time": 0.0017919540405273438
+    },
+    {
+      "graph": "gc_70_9",
+      "algorithm": "tabu",
+      "repetition": 1,
+      "color_count": 30,
+      "conflict_count": 0,
+      "execution_time": 25.685939073562622
+    },
+    {
+      "graph": "gc_70_9",
+      "algorithm": "aco",
+      "repetition": 1,
+      "color_count": 29,
+      "conflict_count": 0,
+      "execution_time": 318.576238155365
+    }
+  ],
+  "statistics": [
+    {
+      "graph": "gc_70_9",
+      "best_known": 28,
+      "algorithm": "Greedy",
+      "best_colors": 32,
+      "avg_colors": 32.0,
+      "std_colors": NaN,
+      "avg_conflicts": 0.0,
+      "avg_time": 0.0017919540405273438,
+      "std_time": NaN,
+      "deviation_best": 14.285714285714285,
+      "deviation_avg": 14.285714285714285
+    },
+    {
+      "graph": "gc_70_9",
+      "best_known": 28,
+      "algorithm": "Tabu Search",
+      "best_colors": 30,
+      "avg_colors": 30.0,
+      "std_colors": NaN,
+      "avg_conflicts": 0.0,
+      "avg_time": 25.685939073562622,
+      "std_time": NaN,
+      "deviation_best": 7.142857142857142,
+      "deviation_avg": 7.142857142857142
+    },
+    {
+      "graph": "gc_70_9",
+      "best_known": 28,
+      "algorithm": "ACO",
+      "best_colors": 29,
+      "avg_colors": 29.0,
+      "std_colors": NaN,
+      "avg_conflicts": 0.0,
+      "avg_time": 318.576238155365,
+      "std_time": NaN,
+      "deviation_best": 3.571428571428571,
+      "deviation_avg": 3.571428571428571
+    }
+  ]
+}

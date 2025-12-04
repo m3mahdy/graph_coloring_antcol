@@ -1168,7 +1168,8 @@ class ACOGraphColoring:
                 }
         
         # Print newline after progress updates
-        print()
+        if self.verbose:
+            print()
         
         return {
             'solution': self.best_global_solution,
