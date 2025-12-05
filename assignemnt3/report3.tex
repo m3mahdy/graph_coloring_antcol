@@ -89,6 +89,9 @@ The report is organized as follows: Section~\ref{sec:problem} defines the GCP fo
 The \textbf{Graph Coloring Problem (GCP)} is formally defined for an undirected graph $G = (V, E)$, where $V$ represents the set of vertices and $E$ is the set of edges connecting these vertices. A coloring of $G$ is a function $C : V \to \mathbb{N}^+$ that assigns a color to each vertex in $V$, subject to the constraint that any two adjacent vertices must be assigned different colors. Formally, for any edge $(u, v) \in E$, it must hold that $C(u) \neq C(v)$. The primary objective of the GCP is to find the minimum number of colors required for a valid coloring, which is known as the chromatic number of $G$, denoted by $\chi(G)$\cite{bessedik_ant_2005,mendez_diaz_tabu_2014}.
 \newline
 
+\textbf{Note:} While several GCP variations exist in the literature—including Equitable Coloring Problem (ECP), Robust Graph Coloring Problem (RGCP), and Graph b-coloring Problem, this work focuses exclusively on the classical vertex coloring problem as defined above.\newline
+
+\textbf{Problem Components:}
 
 \textbf{Input:}
 \begin{itemize}
