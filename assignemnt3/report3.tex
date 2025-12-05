@@ -342,7 +342,11 @@ An \textbf{automated hyperparameter optimization} strategy was employed using th
     \item \textbf{Objective:} Minimize sum of colors across all test instances
 \end{itemize}
 
+The optimized parameter values are presented in Table~\ref{tab:hyperparameters}.
+ß
 \begin{longtable}{|l|l|l|}
+\caption{ACO Hyperparameter Optimization Results}
+\label{tab:hyperparameters}\\
 \hline
 Parameter (Factor) & Search Range & Optimal Value \\
 \hline
@@ -410,9 +414,11 @@ The best trial configuration (trial 19) successfully produced a valid conflict-f
 \end{figure}
 
 \subsection{Datasets}
-We use standardized \textbf{Benchmark Instances} from the DIMACS graph coloring library \cite{MendezDiaz2014} to ensure the generality of the results and enable comparison with existing literature.
+We use standardized \textbf{Benchmark Instances} from the DIMACS graph coloring library \cite{MendezDiaz2014} to ensure the generality of the results and enable comparison with existing literature. The characteristics of the selected test instances are shown in Table~\ref{tab:datasets}.
 
 \begin{longtable}{|l|l|l|l|l|}
+\caption{DIMACS Benchmark Instances Characteristics}
+\label{tab:datasets}\\
 \hline
 Instance & Vertices ($|V|$) & Edges ($|E|$) & Density & Chromatic Number ($\chi(G)$, BKS) \\
 \hline
@@ -426,7 +432,7 @@ dsjc1000.5 & 1000 & 249,826 & 50.0\% & 85 \\
 \hline
 \end{longtable}
 
-These instances were selected to represent diverse graph characteristics:
+As detailed in Table~\ref{tab:datasets}, these instances were selected to represent diverse graph characteristics:
 \begin{itemize}
     \item \textbf{dsjc250.5:} Medium-size, medium-density graph
     \item \textbf{dsjc500.9:} Medium-size, very high-density graph (hardest instance)
@@ -455,29 +461,29 @@ Performance is evaluated using:
 
 \subsection{Comprehensive Three-Way Comparison}
 
-The ACO algorithm's performance is evaluated against two baseline methods for comparative analysis: \textbf{Greedy} (simple constructive heuristic providing fast approximate solutions) and \textbf{Tabu Search} (the S-metaheuristic implemented in Assignment 2, representing state-of-the-art single-solution approach). Table 1 presents detailed performance statistics across all three algorithms.
+The ACO algorithm's performance is evaluated against two baseline methods for comparative analysis: \textbf{Greedy} (simple constructive heuristic providing fast approximate solutions) and \textbf{Tabu Search} (the S-metaheuristic implemented in Assignment 2). Table~\ref{tab:performance_comparison} presents detailed performance statistics across all three algorithms.
 
-\begin{longtable}{|l|l|l|l|l|l|l|}
+\begin{longtable}{|l|l|l|l|l|l|l|l|}
+\caption{Comprehensive Performance Comparison Across Three Algorithmic Paradigms}
+\label{tab:performance_comparison}\\
 \hline
-\textbf{Instance} & \textbf{Algorithm} & \textbf{Best} & \textbf{Avg.} & \textbf{Std.} & \textbf{Avg. Time (s)} & \textbf{Dev. (\%)} \\
+\textbf{Instance} & \textbf{BKS} & \textbf{Algorithm} & \textbf{Best} & \textbf{Avg.} & \textbf{Std.} & \textbf{Avg. Time (s)} & \textbf{Dev. (\%)} \\
 \hline
 \endhead
 \hline
-\multirow{3}{*}{dsjc250.5} & Greedy & 42 & 42.0 & 0.00 & 0.04 & 50.0 \\
-& Tabu Search & 34 & 34.7 & 0.58 & 925.7 & 21.4 \\
-& \textbf{ACO} & \textbf{55} & \textbf{55.7} & \textbf{0.58} & \textbf{1134.4} & \textbf{96.4} \\
+\multirow{3}{*}{dsjc250.5} & \multirow{3}{*}{28} & Greedy & 42 & 42.0 & 0.00 & 0.04 & 50.0 \\
+& & Tabu Search & 34 & 34.7 & 0.58 & 925.7 & 21.4 \\
+& & \textbf{ACO} & \textbf{55} & \textbf{55.7} & \textbf{0.58} & \textbf{1134.4} & \textbf{96.4} \\
 \hline
-\multirow{3}{*}{dsjc500.9} & Greedy & 174 & 174.0 & 0.00 & 0.24 & 38.1 \\
-& Tabu Search & 164 & 166.0 & 2.00 & 6730.9 & 30.2 \\
-& \textbf{ACO} & \textbf{199} & \textbf{201.3} & \textbf{2.52} & \textbf{5853.5} & \textbf{57.9} \\
+\multirow{3}{*}{dsjc500.9} & \multirow{3}{*}{126} & Greedy & 174 & 174.0 & 0.00 & 0.24 & 38.1 \\
+& & Tabu Search & 164 & 166.0 & 2.00 & 6730.9 & 30.2 \\
+& & \textbf{ACO} & \textbf{199} & \textbf{201.3} & \textbf{2.52} & \textbf{5853.5} & \textbf{57.9} \\
 \hline
-\multirow{3}{*}{dsjc1000.5} & Greedy & 125 & 125.0 & 0.00 & 0.73 & 47.1 \\
-& Tabu Search & 124 & 124.7 & 0.58 & 10026.2 & 45.9 \\
-& \textbf{ACO} & \textbf{226} & \textbf{227.0} & \textbf{1.00} & \textbf{13669.6} & \textbf{165.9} \\
+\multirow{3}{*}{dsjc1000.5} & \multirow{3}{*}{85} & Greedy & 125 & 125.0 & 0.00 & 0.73 & 47.1 \\
+& & Tabu Search & 124 & 124.7 & 0.58 & 10026.2 & 45.9 \\
+& & \textbf{ACO} & \textbf{226} & \textbf{227.0} & \textbf{1.00} & \textbf{13669.6} & \textbf{165.9} \\
 \hline
 \end{longtable}
-
-\textbf{Table 1:} Comprehensive performance comparison across three algorithmic paradigms. Best-Known Solutions (BKS): dsjc250.5=28, dsjc500.9=126, dsjc1000.5=85.
 
 The comparative performance analysis (Figures~\ref{fig:comparison_best} and~\ref{fig:comparison_avg}) reveals a striking pattern: ACO consistently underperforms both baseline methods across all test instances, challenging the expectation that metaheuristics should outperform simple constructive approaches. Examining best-case performance (Figure~\ref{fig:comparison_best}), ACO produces 58-166\% more colors than the best-known solutions, while Tabu Search achieves only 21-46\% deviation. More concerning, ACO even trails the deterministic Greedy algorithm on some instances, suggesting fundamental algorithmic limitations rather than mere parameter tuning issues.
 
@@ -531,7 +537,7 @@ ACO demonstrates distinct characteristics as a constructive population-based met
 \subsection{Detailed Discussion and Insights}
 
 \subsubsection{Quality-Time Trade-off}
-The experimental results demonstrate clear trade-offs between the three algorithmic paradigms, as illustrated in Figures \ref{fig:comparison_best}, \ref{fig:comparison_avg}, and \ref{fig:comparison_time}:
+The experimental results (Table~\ref{tab:performance_comparison}) demonstrate clear trade-offs between the three algorithmic paradigms, as illustrated in Figures \ref{fig:comparison_best}, \ref{fig:comparison_avg}, and \ref{fig:comparison_time}:
 \begin{itemize}
     \item \textbf{Greedy:} Fastest but lowest quality - appropriate for time-critical applications.
     \item \textbf{Tabu Search:} Highest quality but most expensive - optimal when solution quality is paramount.
@@ -560,6 +566,7 @@ While the empirical results clearly demonstrate ACO's underperformance, the unde
 \end{enumerate}
 
 \subsubsection{Graph Characteristics Impact}
+As shown in Table~\ref{tab:performance_comparison} and illustrated in Figures~\ref{fig:comparison_best} and~\ref{fig:comparison_avg}:
 \begin{itemize}
     \item \textbf{Density Effect:} All algorithms struggle more with high-density graphs (dsjc500.9, 90\% density) where conflict constraints are tighter. However, ACO's degradation is most severe (58\% deviation vs 30\% for TS).
     
