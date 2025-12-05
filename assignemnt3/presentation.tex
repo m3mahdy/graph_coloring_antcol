@@ -71,24 +71,23 @@ $$\text{Minimize } k \quad \text{subject to} \quad F(C) = \sum_{(u,v) \in E} \ma
 \end{frame}
 
 % Section 2: Methodology
-\section{Methodology: ACO P-Metaheuristic}
+\section{Methodology: ACO for Graph Coloring}
 
 \begin{frame}{Why Ant Colony Optimization?}
-\textbf{ACO Key Advantages:}
+\textbf{Population-based Metaheuristic:}
 \begin{itemize}
     \item \textbf{Constructive Approach:} Builds solutions from scratch (no initial solution dependency)
     \item \textbf{Collective Intelligence:} Multiple ants explore solution space in parallel
-    \item \textbf{Adaptive Learning:} Pheromone-based memory guides search
-    \item \textbf{Balanced Exploration-Exploitation:} Natural probabilistic mechanisms
-    \item \textbf{Flexibility:} Adapts to different problem structures
+    \item \textbf{Adaptive Learning:} Pheromone-based memory guides search toward high-quality solutions
+    \item \textbf{Balanced Exploration-Exploitation:} Pheromone trails (exploitation), heuristic information (intensification), probabilistic selection (exploration), and evaporation (forgetting)
 \end{itemize}
 
 \vspace{0.5cm}
-\textbf{Population-based Metaheuristic:}
+\textbf{Research Objective:}
 \begin{itemize}
-    \item Multiple solutions per iteration increase diversity
-    \item Parallel execution leverages multi-core processors
-    \item Collective experience accumulates over iterations
+    \item Systematic hyperparameter optimization using Optuna
+    \item Comparative analysis: ACO vs Greedy vs Tabu Search
+    \item Illuminate trade-offs between constructive and improvement-based approaches
 \end{itemize}
 \end{frame}
 
@@ -120,7 +119,7 @@ $$P(c) = \frac{[\tau[v][c]]^{\alpha} \cdot [\eta[c]]^{\beta}}{\sum_{c'} [\tau[v]
 \vspace{0.3cm}
 \textbf{Parallel Execution:}
 \begin{itemize}
-    \item $x$ ants per iteration
+    \item $m$ ants per iteration
     \item Multi-threading
 \end{itemize}
 \end{columns}
@@ -198,19 +197,19 @@ Dictionary mapping: $\text{Solution} = \{v_1: c_1, v_2: c_2, \dots, v_n: c_n\}$
 \column{0.5\textwidth}
 \textbf{Intensification:}
 \begin{itemize}
-    \item Pheromone reinforcement on best solutions
-    \item High $\alpha$ increases exploitation
+    \item Pheromone reinforcement from iteration-best
+    \item Alpha ($\alpha$) controls pheromone weight
+    \item Heuristic preference ($\eta[c] = 2.0$) for reusing colors
 \end{itemize}
 
 \column{0.5\textwidth}
 \textbf{Diversification:}
 \begin{itemize}
     \item Pheromone evaporation $(1-\rho)$
-    \item High $\beta$ increases diversification
-    \item Probabilistic (not greedy) selection
+    \item Beta ($\beta$) controls heuristic weight
+    \item Probabilistic color selection
     \item Random node ordering
-    \item Multiple parallel ants
-    \item Low $\rho$ promotes exploration
+    \item Parallel construction ($m$ ants)
 \end{itemize}
 \end{columns}
 
@@ -264,8 +263,7 @@ Patience Ratio & [0.3, 0.8] & 0.577 \\
 \end{table}
 
 \vspace{0.3cm}
-\textbf{Key Findings:} High $\beta$ (heuristic) and low $\rho$ (evaporation) \\
-$\rightarrow$ Intensification dominates over diversification
+\textbf{Key Findings:} High $\beta$ (strong heuristic guidance) and low $\rho$ (slow evaporation) \hspace{0.5cm} $\rightarrow$ Intensification over Diversification for GCP
 \end{frame}
 
 \begin{frame}{Optimization History}
@@ -335,25 +333,25 @@ dsjc1000.5 & 1000 & 249,826 & 50.0\% & 85 \\
 % Section 4: Results
 \section{Results and Discussion}
 
-\begin{frame}{Three-Way Performance Comparison}
+\begin{frame}{Comparative Performance Analysis}
 \begin{table}
 \centering
 \tiny
-\begin{tabular}{llcccccc}
+\begin{tabular}{lcccccccc}
 \toprule
-\textbf{Instance} & \textbf{Algorithm} & \textbf{Best} & \textbf{Avg.} & \textbf{Std.} & \textbf{Time (s)} & \textbf{Dev. (\%)} \\
+\textbf{Instance} & \textbf{BKS} & \textbf{Algorithm} & \textbf{Best} & \textbf{Avg.} & \textbf{Std.} & \textbf{Time (s)} & \textbf{Dev. (\%)} \\
 \midrule
-\multirow{3}{*}{dsjc250.5} & Greedy & 42 & 42.0 & 0.00 & 0.04 & 50.0 \\
-& Tabu Search & 34 & 34.7 & 0.58 & 925.7 & 21.4 \\
-& \textbf{ACO} & \textbf{55} & \textbf{55.7} & \textbf{0.58} & \textbf{1134.4} & \textbf{96.4} \\
+\multirow{3}{*}{dsjc250.5} & \multirow{3}{*}{28} & Greedy & 42 & 42.0 & 0.00 & 0.04 & 50.0 \\
+& & Tabu Search & 34 & 34.7 & 0.58 & 925.7 & 21.4 \\
+& & \textbf{ACO} & \textbf{55} & \textbf{55.7} & \textbf{0.58} & \textbf{1134.4} & \textbf{96.4} \\
 \midrule
-\multirow{3}{*}{dsjc500.9} & Greedy & 174 & 174.0 & 0.00 & 0.24 & 38.1 \\
-& Tabu Search & 164 & 166.0 & 2.00 & 6730.9 & 30.2 \\
-& \textbf{ACO} & \textbf{199} & \textbf{201.3} & \textbf{2.52} & \textbf{5853.5} & \textbf{57.9} \\
+\multirow{3}{*}{dsjc500.9} & \multirow{3}{*}{126} & Greedy & 174 & 174.0 & 0.00 & 0.24 & 38.1 \\
+& & Tabu Search & 164 & 166.0 & 2.00 & 6730.9 & 30.2 \\
+& & \textbf{ACO} & \textbf{199} & \textbf{201.3} & \textbf{2.52} & \textbf{5853.5} & \textbf{57.9} \\
 \midrule
-\multirow{3}{*}{dsjc1000.5} & Greedy & 125 & 125.0 & 0.00 & 0.73 & 47.1 \\
-& Tabu Search & 124 & 124.7 & 0.58 & 10026.2 & 45.9 \\
-& \textbf{ACO} & \textbf{226} & \textbf{227.0} & \textbf{1.00} & \textbf{13669.6} & \textbf{165.9} \\
+\multirow{3}{*}{dsjc1000.5} & \multirow{3}{*}{85} & Greedy & 125 & 125.0 & 0.00 & 0.73 & 47.1 \\
+& & Tabu Search & 124 & 124.7 & 0.58 & 10026.2 & 45.9 \\
+& & \textbf{ACO} & \textbf{226} & \textbf{227.0} & \textbf{1.00} & \textbf{13669.6} & \textbf{165.9} \\
 \bottomrule
 \end{tabular}
 \end{table}
@@ -389,7 +387,7 @@ dsjc1000.5 & 1000 & 249,826 & 50.0\% & 85 \\
 
 \begin{frame}{Algorithm Comparison Summary}
 \begin{block}{Greedy (Baseline)}
-\textbf{Strength:} Extremely fast (< 1 second) \\
+\textbf{Strength:} Extremely fast (less than 1 second) \\
 \textbf{Weakness:} Moderate quality (38-50\% deviation) \\
 \textbf{Use Case:} Rapid prototyping, time-critical applications
 \end{block}
@@ -401,9 +399,9 @@ dsjc1000.5 & 1000 & 249,826 & 50.0\% & 85 \\
 \end{block}
 
 \begin{block}{ACO (This Work)}
-\textbf{Strength:} Consistent, no initial dependency \\
+\textbf{Strength:} Consistent, parallel construction, no initial dependency \\
 \textbf{Weakness:} Poorest quality (58-167\% deviation), comparable time to TS \\
-\textbf{Current Status:} Not recommended in present form
+\textbf{Finding:} Constructive approach struggles with color minimization
 \end{block}
 \end{frame}
 
@@ -423,8 +421,8 @@ dsjc1000.5 & 1000 & 249,826 & 50.0\% & 85 \\
     
     \item \textbf{Pheromone Sparsity:}
     \begin{itemize}
-        \item Large color sets (50-200 colors) dilute pheromone signals
-        \item TS's tabu list prevents specific moves without dilution
+        \item Large color sets (50-200 colors) fragment pheromone signals
+        \item TS's tabu list prevents specific moves without fragmentation
     \end{itemize}
 \end{enumerate}
 
@@ -434,26 +432,25 @@ dsjc1000.5 & 1000 & 249,826 & 50.0\% & 85 \\
 \end{frame}
 
 \begin{frame}{Key Insights}
+\small
 \begin{block}{Quality-Time Trade-off}
 \begin{itemize}
-    \item \textbf{Greedy:} Fast but moderate quality
-    \item \textbf{Tabu Search:} Excellent quality, high cost
-    \item \textbf{ACO:} Poor quality despite comparable cost to TS
+    \item \textbf{Greedy:} Fast (less than 1 second) but moderate quality (38-50\% deviation)
+    \item \textbf{Tabu Search:} Superior quality (21-46\% deviation), high cost (926-10,026s)
+    \item \textbf{ACO:} Poor quality (58-167\% deviation) despite comparable cost to TS
 \end{itemize}
 \end{block}
 
 \begin{block}{Paradigm Suitability}
 \begin{itemize}
-    \item \textbf{Population-based $\neq$ automatically better}
-    \item Improvement-based (TS) benefits from feasible starting solutions
-    \item Constructive methods (ACO) must learn from scratch
-    \item Problem structure determines paradigm suitability
+    \item Problem structure determines paradigm suitability, not algorithmic category
+    \item Improvement-based methods benefit from feasible initialization
+    \item Effectiveness depends on problem-specific heuristics
 \end{itemize}
 \end{block}
 
-\begin{block}{Tuning Insights}
-High $\beta$ and low $\rho$ essential → \textbf{Intensification > Diversification} \\
-Questions whether ACO's pheromone learning is well-suited for GCP
+\begin{block}{Future Work}
+Hybrid approaches, degree-based heuristics, alternative pheromone models tailored to graph coloring constraints
 \end{block}
 \end{frame}
 
