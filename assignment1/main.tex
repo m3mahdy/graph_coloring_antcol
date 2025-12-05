@@ -1,0 +1,177 @@
+\documentclass{article}
+
+\usepackage{hyperref}
+
+ 
+\usepackage[utf8]{inputenc}
+\usepackage{amsmath}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{graphicx}
+\usepackage{longtable}
+\usepackage{tabularx}
+\usepackage{ragged2e}
+\usepackage{booktabs} % For professional-looking tables
+\usepackage{enumitem} % For custom list formatting
+\usepackage{float} % For [H] placement of tables
+
+ \usepackage[letterpaper,top=2cm,bottom=2cm,left=3cm,right=3cm,marginparwidth=1.75cm]{geometry} 
+ 
+\begin{document}
+
+
+\setlength{\parindent}{0cm}
+%%  Declarations of your title page
+\begin{titlepage}
+ 
+\begin{center}
+ 
+% Upper part of the page
+
+\includegraphics[width=5cm]{KSU-Logo.png}\\
+\small King Saud University\\College of Computer and Information Sciences\\Department of Computer Science\\[2cm]
+
+
+
+% Title
+{\Huge \bfseries Selected Topics in Artificial Intelligence \par} 
+\vspace{0.5cm} 
+{\Huge \bfseries  CSC 569 \par} 
+\vspace{1cm} 
+{\Huge \bfseries Graph Coloring: A Literature Review \par} 
+\vspace{0.4cm}  
+
+% Author and supervisor
+\large \textit{By:}\\[0.3cm]
+\large Mohammed Edris Mahdy \\
+\large 446910613 \\
+[0.5cm]
+\large Mohammed Ahmed Ewida \\
+\large 446910614 \\
+[1cm]
+
+\large  \textit{ Under the supervision of:}\\[0.3cm]
+\large Prof. Manar Hosny    \\
+[1cm]
+% Submitted in partial fulfillment of the requirements \\
+% for the Degree of Master in Artificial Intelligence at \\
+% the Department of Computer Science, \\
+% College of Computer and Information Sciences,\\
+% King Saud University
+
+\vfill
+ 
+% Bottom of the page
+{\large September 2025 }
+ 
+\end{center}
+ 
+\end{titlepage}
+
+
+
+
+% \section*{A Review of Metaheuristic Approaches for the Graph Coloring Problem}
+
+\section{Introduction}
+The Graph Coloring Problem (GCP) is a foundational NP-hard challenge within graph theory, computational complexity, and operations research, drawing significant attention due to its diverse and practical applications \cite{bessedik_ant_2005, cadenas_comparative_2023, mendez_diaz_tabu_2014}. Instances of GCP manifest in various real-world scenarios, including scheduling tasks, allocating resources such as frequencies in telecommunication networks, and managing timetables \cite{bessedik_ant_2005, mendez_diaz_tabu_2014, postigo_comparative_2021}. The core of the problem involves assigning colors to graph vertices such that no two adjacent vertices share the same color, with the objective of minimizing the total number of colors used \cite{bessedik_ant_2005, cadenas_comparative_2023}. This minimal number of colors is termed the chromatic number of the graph \cite{bessedik_ant_2005, indumathi_implementation_2021}.
+
+Given its NP-hard nature, finding optimal solutions for large or complex graph instances through exact methods often becomes computationally infeasible within practical timeframes \cite{bessedik_ant_2005, cadenas_comparative_2023, postigo_comparative_2021}. Consequently, heuristic and metaheuristic approaches have become indispensable tools for obtaining high-quality, near-optimal solutions efficiently \cite{bessedik_ant_2005, cadenas_comparative_2023, kokosinski_evaluation_2015}. These methods leverage computational power to explore vast solution spaces, often integrating problem-specific knowledge to guide the search process \cite{cadenas_comparative_2023, postigo_comparative_2021}.
+
+Beyond the classical GCP, several variations have emerged to model more intricate real-world constraints. The Equitable Coloring Problem (ECP), for instance, introduces the additional condition that the sizes of any two color classes must differ by at most one unit, ensuring a balanced distribution of resources or workload \cite{mendez_diaz_tabu_2014, kokosinski_evaluation_2015}. Another variant, the Robust Graph Coloring Problem (RGCP), addresses scenarios where the adjacency relationships between vertices are not stable, allowing for a tolerance of conflicts in non-adjacent (complementary) edges while assigning penalties \cite{kokosinski_evaluation_2015}. Furthermore, the Graph b-coloring Problem seeks a proper coloring where every color class contains a "dominating vertex" adjacent to at least one vertex in every other color class, aiming to maximize the number of colors used under this specific connectivity requirement \cite{labed_fast_2018}. These variations highlight the adaptability and necessity of advanced algorithmic techniques to tackle a spectrum of combinatorial challenges.
+
+\section{Problem Definition}
+The Graph Coloring Problem (GCP) is formally defined for an undirected graph $G = (V, E)$, where $V$ represents the set of vertices and $E$ is the set of edges connecting these vertices \cite{bessedik_ant_2005, cadenas_comparative_2023, mendez_diaz_tabu_2014}. A $k$-coloring of $G$ is a function $C: V \to \{1, 2, \dots, k\}$ that assigns a color from a set of $k$ available colors to each vertex in $V$, subject to the constraint that any two adjacent vertices must be assigned different colors. Formally, for any edge $(u, v) \in E$, it must hold that $C(u) \neq C(v)$ \cite{bessedik_ant_2005, cadenas_comparative_2023, indumathi_implementation_2021, postigo_comparative_2021}. The primary objective of the GCP is to find the minimum number of colors, $k$, required for a valid coloring, which is known as the chromatic number of $G$, denoted by $\chi(G)$ \cite{bessedik_ant_2005, indumathi_implementation_2021}.
+
+Several critical variations of the GCP are also explored:
+\begin{enumerate}[label=\textbullet]
+    \item \textbf{Equitable Coloring Problem (ECP):} This variation extends the standard GCP by adding an equity constraint \cite{mendez_diaz_tabu_2014}. An equitable $k$-coloring of a graph $G$ is a $k$-coloring where the sizes of any two color classes (sets of vertices assigned the same color) differ by at most one unit. The objective of ECP is to find the minimum $k$ for which such an equitable $k$-coloring exists, known as the equitable chromatic number $\chi_{eq}(G)$ \cite{mendez_diaz_tabu_2014}. This ensures a balanced distribution among the colored groups.
+
+    \item \textbf{Robust Graph Coloring Problem (RGCP):} Defined for an undirected weighted graph $G=(V,E)$ where edges $e \in E$ have weights $P(e) = 1$, and non-edges $e \in \bar{E}$ (complementary edges) have penalties $0 < P(e) < 1$ if they become conflicting \cite{kokosinski_evaluation_2015}. A coloring $C$ for RGCP requires that adjacent vertices in $E$ always receive different colors ($C(u) \neq C(v)$ for $(u,v) \in E$). Additionally, conflicts in $\bar{E}$ are tolerated up to a certain "rigidity level," which quantifies the sum of penalties for color conflicts in $\bar{E}$. The goal is to minimize this rigidity level or achieve a specified relative robustness threshold (RRT) while using a minimal number of colors \cite{kokosinski_evaluation_2015}.
+
+    \item \textbf{Graph b-coloring Problem:} A b-coloring of a graph $G$ is a proper vertex coloring where every color class contains at least one vertex (referred to as a dominating vertex) that is adjacent to at least one vertex from every other color class \cite{labed_fast_2018}. The b-chromatic number of $G$, denoted $\phi(G)$, is the largest $k$ such that $G$ admits a b-coloring with $k$ colors. This problem aims to maximize the number of colors under this specific dominating vertex constraint \cite{labed_fast_2018}.
+\end{enumerate}
+
+\section{Related Work}
+The landscape of graph coloring algorithms encompasses a spectrum from exact methods, which guarantee optimal solutions, to approximate algorithms and metaheuristics, which prioritize efficiency for complex instances \cite{cadenas_comparative_2023}.
+
+\subsection{Exact Algorithms}
+Exact algorithms aim to determine the true chromatic number $\chi(G)$ or its variations. These methods, while guaranteeing optimality, often suffer from exponential time complexity, rendering them impractical for large-scale graphs \cite{cadenas_comparative_2023}. Such algorithms are primarily explored for their theoretical contributions or for solving smaller instances. For instance, specific exact algorithms for ECP using Integer Linear Programming (ILP) have been proposed \cite{mendez_diaz_tabu_2014}. However, for typical real-world graph sizes, the computational cost of these approaches quickly becomes prohibitive \cite{cadenas_comparative_2023}.
+
+\subsection{Single-Based Solution Algorithms}
+Single-based solution algorithms iteratively improve or construct a single solution. This category includes both deterministic heuristics, known for their speed, and more sophisticated metaheuristics, which often yield higher quality solutions at a greater computational expense.
+
+\subsubsection{Heuristics}
+\begin{itemize}[leftmargin=*,noitemsep,topsep=0pt]
+    \item \textbf{Greedy Algorithm:} This is one of the simplest and fastest coloring algorithms \cite{cadenas_comparative_2023, postigo_comparative_2021}. It sequentially assigns the smallest available color to each vertex, based on a predefined or random order \cite{cadenas_comparative_2023, postigo_comparative_2021}. While computationally efficient, with a worst-case complexity of $O(n^2)$, its solution quality is highly dependent on the initial vertex ordering and may be far from optimal \cite{postigo_comparative_2021}. However, for planar graphs, the greedy algorithm can be faster than more complex methods \cite{cadenas_comparative_2023}.
+
+    \item \textbf{DSATUR Algorithm:} Proposed by Brélaz, DSATUR (Degree Saturation) is a widely used and often efficient heuristic for GCP \cite{bessedik_ant_2005, cadenas_comparative_2023, postigo_comparative_2021}. Unlike the simple greedy approach, DSATUR dynamically selects the next vertex to color based on its saturation degree (the number of distinct colors in its neighborhood) \cite{bessedik_ant_2005, cadenas_comparative_2023}. In case of ties, it prioritizes vertices with the highest degree \cite{bessedik_ant_2005}. This heuristic typically offers better solution quality than the simple greedy algorithm while maintaining a similar $O(n^2)$ complexity \cite{postigo_comparative_2021}. For planar graphs, DSATUR has been shown to consistently find optimal solutions \cite{cadenas_comparative_2023}.
+
+    \item \textbf{Recursive Largest First (RLF) Algorithm:} Introduced by Leighton, RLF colors a graph by iteratively identifying and coloring independent sets of vertices with the same color \cite{bessedik_ant_2005, postigo_comparative_2021}. In each iteration, it selects a vertex with the highest degree in the uncolored subgraph and then expands the color class by adding other uncolored vertices that are not adjacent to any already-chosen vertex in the current class \cite{bessedik_ant_2005}. RLF generally produces high-quality solutions but at a higher computational cost, typically $O(n^3)$, making it less efficient for very large graphs compared to greedy or DSATUR \cite{postigo_comparative_2021}.
+
+    \item \textbf{DANGER and IMP-DANGER Algorithms:} These heuristics are designed for planar graphs, where they prioritize coloring vertices based on a "danger" parameter, reserving a subset of nodes for a second coloring phase \cite{cadenas_comparative_2023}. The original DANGER algorithm computes a "potential difference" for each vertex, similar to the saturation degree in DSATUR \cite{cadenas_comparative_2023}. The improved version, IMP-DANGER, refines this parameter by considering colors assigned to neighbors of neighbors \cite{cadenas_comparative_2023}. Both generally perform similarly in solution quality but may be outperformed by DSATUR for random planar graph instances \cite{cadenas_comparative_2023}.
+
+    \item \textbf{QuickBcol Algorithm:} Proposed for the Graph b-coloring Problem, QuickBcol is a heuristic that aims to find the b-chromatic number by minimizing conflicts and maximizing the number of dominating vertices \cite{labed_fast_2018}. It starts its search from an initial value derived from the graph's m-degree \cite{labed_fast_2018}. Experimental results on various graphs, including trees and regular graphs, have demonstrated its efficiency in comparison to theoretical benchmarks \cite{labed_fast_2018}.
+\end{itemize}
+
+\subsubsection{Metaheuristics (Single-Solution Based)}
+\begin{itemize}[leftmargin=*,noitemsep,topsep=0pt]
+    \item \textbf{Tabu Search (TS) / TabuCol:} Tabu Search is a metaheuristic that guides a local search process, incorporating memory structures to avoid cycling and escape local optima \cite{mendez_diaz_tabu_2014, kokosinski_evaluation_2015}. For GCP, TS variants like TabuCol explore the space of (potentially inappropriate) $k$-colorings, reassigning vertex colors to reduce conflicting edges \cite{mendez_diaz_tabu_2014, postigo_comparative_2021}. A "tabu list" stores recent moves, preventing their reversal for a certain period (tabu tenure) \cite{mendez_diaz_tabu_2014}. Dynamic tabu tenures, which adapt based on solution quality, have been shown to improve diversification \cite{mendez_diaz_tabu_2014}. TabuCol can find very good solutions for moderate-sized graphs but is computationally demanding \cite{postigo_comparative_2021}. For the ECP, TabuEqCol, an adaptation of TabuCol, has shown strong performance, improving initial solutions and often reaching optimal or near-optimal equitable colorings \cite{mendez_diaz_tabu_2014}. For RGCP, TS generally outperforms Simulated Annealing in terms of relative robustness \cite{kokosinski_evaluation_2015}.
+
+    \item \textbf{Simulated Annealing (SA):} Inspired by the annealing process in metallurgy, SA is a metaheuristic that explores the solution space by accepting not only improving moves but also, with a certain probability, worsening moves \cite{bessedik_ant_2005, kokosinski_evaluation_2015}. This probabilistic acceptance decreases over time, allowing the algorithm to escape local optima early in the search and converge to good solutions later \cite{kokosinski_evaluation_2015}. While simpler and sometimes faster than TS for larger graphs, its reliance on randomization can lead to slightly less robust solutions compared to the more precise search of TS \cite{kokosinski_evaluation_2015}.
+
+    \item \textbf{Logical Search Optimization (LSO):} This is a discrete metaheuristic designed for both planar and non-planar graphs, inspired by genetic and evolutionary algorithms \cite{cadenas_comparative_2023}. LSO focuses on minimizing conflicts by transforming conflict vectors using logical operators \cite{cadenas_comparative_2023}. It employs a bisection method to minimize the number of colors used and controls population dynamics with replacement and removal parameters \cite{cadenas_comparative_2023}. For planar graphs with 50 vertices, LSO can achieve optimal colorings but is significantly more time-consuming than deterministic heuristics \cite{cadenas_comparative_2023}.
+\end{itemize}
+
+\subsection{Population-Based Solution Algorithms}
+Population-based metaheuristics maintain and evolve a set of solutions, fostering diversity and global exploration.
+
+\begin{itemize}[leftmargin=*,noitemsep,topsep=0pt]
+    \item \textbf{Ant Colony Optimization (ACO) / Ant System (AS) / Ant Colony System (ACS):} Inspired by the foraging behavior of real ants, ACO algorithms use artificial ants to cooperatively construct solutions \cite{bessedik_ant_2005, postigo_comparative_2021}. Ants deposit "pheromone trails" on promising solution components, guiding future ants. Pheromone evaporation prevents premature convergence and encourages exploration \cite{bessedik_ant_2005}. The Ant Colony System (ACS) improves upon the original Ant System (AS) by emphasizing collected information and using elitist strategies for pheromone updates \cite{bessedik_ant_2005}. ACS approaches often hybridize with local search methods, such as Tabu Search, to further enhance solution quality \cite{bessedik_ant_2005, postigo_comparative_2021}. ACS, particularly its construction strategy hybridized with RLF (ACS1\_R), has demonstrated strong performance, approaching leading coloring algorithms and outperforming some hybrid algorithms on large DIMACS graphs \cite{bessedik_ant_2005}. It can be computationally intensive but offers high-quality solutions for very large graphs \cite{postigo_comparative_2021}.
+
+    \item \textbf{Scatter Search (SS):} SS is an evolutionary method that, like ACO, differs from Genetic Algorithms in its use of information from previous iterations during solution construction \cite{bessedik_ant_2005}. SS integrates components such as Tabu Search to improve solutions \cite{bessedik_ant_2005}.
+
+    \item \textbf{Genetic Algorithms (GA) and Memetic Algorithms:} GAs are a class of evolutionary algorithms that mimic natural selection, evolving a population of candidate solutions using operators like selection, crossover, and mutation \cite{bessedik_ant_2005}. Memetic algorithms enhance GAs by incorporating local search procedures to refine individual solutions, effectively combining global exploration with local exploitation \cite{cadenas_comparative_2023}. These algorithms are generally employed to obtain near-optimal colorings for various graph classes \cite{cadenas_comparative_2023}.
+
+    \item \textbf{Parallel Metaheuristics:} Given the computational demands of metaheuristics, parallel implementations (e.g., PTS for Tabu Search, PSA for Simulated Annealing, Parallel Evolutionary Algorithm) have been developed \cite{kokosinski_evaluation_2015}. These typically involve running multiple independent search processes that periodically exchange information to leverage collective intelligence \cite{kokosinski_evaluation_2015}. For RGCP, parallel versions have shown slight improvements in solution quality compared to their sequential counterparts and can reduce computation time \cite{kokosinski_evaluation_2015}.
+\end{itemize}
+
+\section{Summary}
+
+Table \ref{tab:comparison} provides a comparative overview of the contributions and methodologies found in the literature regarding metaheuristics for graph coloring.
+
+\begin{table}[H]
+    \centering
+    \caption{Comparison of Papers on Graph Coloring Metaheuristics}
+    \label{tab:comparison}
+    \begin{tabularx}{\textwidth}{>{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{2.5cm} >{\raggedright\arraybackslash}p{3.5cm} >{\raggedright\arraybackslash}p{6.5cm}}
+        \toprule
+        \textbf{Paper/Year} & \textbf{Problem Variation Addressed} & \textbf{Algorithms Used} & \textbf{Key Contribution/Finding} \\
+        \midrule
+        Bessedik et al. (2005) \cite{bessedik_ant_2005} & GCP & Ant Colony System (ACS) with RLF/DSATUR (construction), Tabu Search (improvement) & Introduced a first ACO approach for GCP. ACS1\_R (construction with RLF) demonstrated best results on DIMACS graphs, approaching state-of-the-art algorithms and outperforming some hybrid methods. ACS algorithms were also found to be quite fast. \\
+        \addlinespace
+        Cadenas et al. (2023) \cite{cadenas_comparative_2023} & GCP (Planar Graphs) & GREEDY, DSATUR, DANGER, IMP-DANGER, Logical Search Optimization (LSO) & DSATUR consistently achieved optimal colorings for planar graphs in the experimental set, outperforming other heuristics and the LSO metaheuristic in terms of speed and quality. LSO achieved optimal results for smaller instances but was significantly slower. \\
+        \addlinespace
+        Méndez Díaz et al. (2014) \cite{mendez_diaz_tabu_2014} & Equitable Coloring Problem (ECP) & TabuEqCol (adaptation of dynamic TabuCol) & Proposed a Tabu Search heuristic for ECP, TabuEqCol. Showed good performance on benchmark instances, often improving initial solutions and achieving optimal or near-optimal equitable colorings, matching or exceeding previous TS algorithms for ECP. \\
+        \addlinespace
+        Kokosiński and Ochał (2015) \cite{kokosinski_evaluation_2015} & Robust Graph Coloring Problem (RGCP) & Tabu Search (TS), Simulated Annealing (SA), Parallel TS (PTS), Parallel SA (PSA) & Proposed a new formulation for RGCP using relative robustness. TS generally outperformed SA in achieving higher relative robustness (RR). Parallel metaheuristics showed slight improvements over sequential versions in solution quality, with PTSC being faster than TSC. \\
+        \addlinespace
+        Labed et al. (2018) \cite{labed_fast_2018} & Graph b-coloring Problem & QuickBcol (novel heuristic) & Introduced a new heuristic, QuickBcol, for solving the b-coloring problem. Experimental results on trees and regular graphs demonstrated its efficiency compared to theoretical b-chromatic number values. \\
+        \addlinespace
+        Postigo et al. (2021) \cite{postigo_comparative_2021} & GCP & Greedy, DSATUR, RLF, TabuCol, AntCol & Compared main GCP algorithms. Greedy and DSATUR were fastest but offered poorer quality. RLF provided high-quality solutions at a higher computational cost. TabuCol was better for moderate graphs ($\leq 1500$ vertices) and AntCol for larger ones in terms of solution quality, though both were computationally demanding. \\
+        \bottomrule
+    \end{tabularx}
+\end{table}
+
+\section{Conclusion}
+The Graph Coloring Problem, along with its various extensions like ECP, RGCP, and b-coloring, remains a vibrant field of research, predominantly addressed by sophisticated metaheuristic techniques due to its inherent NP-hardness \cite{bessedik_ant_2005, cadenas_comparative_2023, mendez_diaz_tabu_2014, kokosinski_evaluation_2015, labed_fast_2018}. While exact algorithms guarantee optimality, their exponential complexity renders them unsuitable for real-world large-scale instances \cite{cadenas_comparative_2023}. Consequently, the focus shifts to heuristics and metaheuristics that provide a favorable trade-off between solution quality and computational efficiency \cite{bessedik_ant_2005, postigo_comparative_2021}.
+
+Heuristic methods such as Greedy and DSATUR offer speed, with DSATUR often yielding better quality due to its saturation-degree-based vertex selection, proving particularly effective for planar graphs \cite{cadenas_comparative_2023, postigo_comparative_2021}. RLF, while more computationally intensive, generally provides higher quality solutions \cite{postigo_comparative_2021}. For problems requiring robust or equitable distributions, specialized heuristics and metaheuristics, such as QuickBcol for b-coloring and TabuEqCol for ECP, have demonstrated their efficacy \cite{mendez_diaz_tabu_2014, labed_fast_2018}.
+
+Metaheuristics, including Tabu Search (e.g., TabuCol), Simulated Annealing, and Ant Colony Optimization (e.g., ACS), offer powerful frameworks for exploring vast solution spaces \cite{bessedik_ant_2005, mendez_diaz_tabu_2014, kokosinski_evaluation_2015, postigo_comparative_2021}. Tabu Search variants are often praised for their precision and ability to escape local optima, while ACO approaches, particularly when hybridized with local search, can achieve high-quality results for very large graphs, albeit with significant computational demands \cite{bessedik_ant_2005, postigo_comparative_2021}. The development of parallel metaheuristics further pushes the boundaries of solvability by reducing execution times and slightly improving solution quality for complex robust coloring problems \cite{kokosinski_evaluation_2015}. The selection of an appropriate algorithm ultimately depends on the specific problem constraints, graph characteristics, and the relative importance of solution quality versus computational time \cite{postigo_comparative_2021}.
+
+\section*{Future work} Future work involves an implementation focusing on two distinct metaheuristic paradigms for the core graph coloring problem: \begin{enumerate} \item A single-solution approach through the tabu search algorithm. \item A population-based approach through ant colony optimization algorithm. \end{enumerate}
+
+\bibliographystyle{IEEEtran}
+\bibliography{selected}
+\end{document}
