@@ -79,7 +79,7 @@
 
 \section{Introduction}
 
-The Graph Coloring Problem (GCP) is an $\text{NP}$-hard combinatorial optimization problem with applications in scheduling, register allocation, and resource management. This report investigates \textbf{Ant Colony Optimization (ACO)}, a population-based metaheuristic, for solving the GCP on DIMACS benchmark instances. The work implements ACO with comprehensive hyperparameter optimization using Optuna and compares its performance against Greedy and Tabu Search baselines to illuminate trade-offs between constructive and improvement-based metaheuristic approaches.
+The Graph Coloring Problem (GCP) is an $\text{NP}$-hard combinatorial optimization problem with applications in scheduling, register allocation, and resource management. This report presents a comprehensive implementation and empirical evaluation of \textbf{Ant Colony Optimization (ACO)}, a population-based metaheuristic, for solving the GCP on DIMACS benchmark instances. The work systematically tunes ACO hyperparameters using Optuna's Tree-structured Parzen Estimator across 40 optimization trials and conducts a rigorous comparative analysis against Greedy heuristic and Tabu Search metaheuristic to elucidate the fundamental trade-offs between constructive population-based and improvement-based single-solution approaches.
 
 The report is organized as follows: Section~\ref{sec:problem} defines the GCP formally. Section~\ref{sec:motivation} discusses the motivation for choosing ACO. Section~\ref{sec:methodology} presents the ACO methodology and algorithms. Section~\ref{sec:solution} describes solution representation and constraint handling. Section~\ref{sec:experimental} details the experimental setup and hyperparameter tuning. Section~\ref{sec:results} presents comparative results and analysis. Section~\ref{sec:conclusion} concludes with key findings and contributions.
 
@@ -90,9 +90,6 @@ The \textbf{Graph Coloring Problem (GCP)} is formally defined for an undirected 
 \newline
 
 
-Below are the formal definitions and components of the GCP:
-%add new line
-\newline
 \textbf{Input:}
 \begin{itemize}
     \item An undirected graph $G = (V, E)$ where:
@@ -145,15 +142,15 @@ The GCP is $\text{NP}$-hard, meaning that finding the optimal chromatic number f
     \item \textbf{Balance of Exploration-Exploitation:} The combination of pheromone trails (exploitation), heuristic information (intensification), probabilistic selection (exploration), and evaporation (forgetting) provides natural mechanisms for balancing these competing objectives.
 \end{itemize}
 
-The comparison between ACO (population-based) and Tabu Search (single-solution) serves to illuminate the fundamental trade-offs between these two major metaheuristic paradigms for the GCP.
+
 
  
-\section{Methodology (P-metaheuristic)}
+\section{Methodology}
 \label{sec:methodology}
 
-This report implements a \textbf{population-based metaheuristic} (Ant Colony Optimization) to address the computational complexity of the GCP. ACO leverages collective intelligence of multiple agents to explore the solution space through constructive pheromone-guided building of solutions.
+This section presents the Ant Colony Optimization algorithm design for the GCP, including its core mechanisms, probabilistic solution construction process, and parallel execution strategy.
 
-\textbf{Ant Colony Optimization (ACO)} is a nature-inspired population-based metaheuristic that mimics the foraging behavior of ants, which deposit pheromone trails to guide other ants toward good solutions \cite{bessedik_ant_2005}. Unlike improvement-based methods like Tabu Search, ACO employs multiple artificial ants that work in parallel to construct complete solutions from scratch, eliminating dependency on initial solution quality.
+\textbf{Ant Colony Optimization (ACO)} is a nature-inspired population-based metaheuristic that simulates ant foraging behavior through pheromone trail deposition and probabilistic path selection \cite{bessedik_ant_2005}. ACO employs multiple artificial ants that construct complete solutions in parallel, using accumulated pheromone information to guide the search process toward high-quality colorings.
 
 \subsection{ACO Mechanism}
 The ACO algorithm for graph coloring operates through the following key mechanisms:
@@ -194,7 +191,7 @@ The ACO algorithm for graph coloring operates through the following key mechanis
 
 \subsection{Algorithm Pseudocode}
 
-The complete ACO algorithm for graph coloring is formalized below in two components: the main ACO loop and the single-ant construction process.
+The ACO algorithm for graph coloring is formalized in two components: the main iteration loop (Algorithm 1) and the single-ant solution construction procedure (Algorithm 2).
 
 \vspace{1em}
 \textbf{Algorithm 1: Ant Colony Optimization (ACO) for GCP}
@@ -257,22 +254,18 @@ The complete ACO algorithm for graph coloring is formalized below in two compone
 \label{sec:solution}
 
 \subsection{Solution Representation}
-In ACO, a coloring solution is represented as a dictionary (mapping) where each key is a vertex and its value is the assigned color:
+A coloring solution is represented as a dictionary mapping each vertex to its assigned color:
 $$
 \text{Solution} = \{v_1: c_1, v_2: c_2, \dots, v_{|V|}: c_{|V|}\}
 $$
 where $c_i \in \{1, 2, \dots, k\}$ represents the color assigned to vertex $v_i$. This representation allows efficient lookup and update operations during ant construction.
 
 \subsection{Objective Function}
-For ACO, the objective is to minimize the number of colors $k$ used in the solution while maintaining zero conflicts:
+The objective is to minimize the number of colors $k$ used in the solution:
 $$
 \text{Minimize } k = |\{c : \exists v \in V, C(v) = c\}|
 $$
-subject to the constraint that $F(C) = 0$, where:
-$$
-F(C) = \sum_{(u,v) \in E} \mathbb{I}(C(u) = C(v))
-$$
-Unlike improvement-based methods (TS), ACO constructs only valid, conflict-free solutions from the start, so $F(C) = 0$ is guaranteed by design.
+subject to the adjacency constraint $\forall (u,v) \in E: C(u) \neq C(v)$. ACO's constructive approach guarantees feasibility by design, as ants only select colors that produce zero conflicts with already-colored neighbors.
 
 \subsection{Constraint Handling}
 ACO uses a \textbf{Preserving Strategy} (constructive approach) where conflicts are prevented during solution construction rather than repaired afterward:
@@ -284,7 +277,7 @@ ACO uses a \textbf{Preserving Strategy} (constructive approach) where conflicts 
 
 \subsection{Population Generation and Diversity}
 \begin{itemize}
-    \item \textbf{Initial Population:} Not applicable in traditional sense. ACO generates a new population of solutions at each iteration through parallel ant construction.
+    \item \textbf{Population per Iteration:} ACO generates a new population of solutions at each iteration through parallel ant construction.
     
     \item \textbf{Ant Starting Nodes:} To ensure diverse exploration:
     \begin{itemize}
@@ -301,18 +294,18 @@ ACO balances exploration and exploitation through multiple complementary mechani
 \begin{itemize}
     \item \textbf{Intensification (Exploitation):}
     \begin{itemize}
-        \item \textbf{Pheromone Reinforcement:} Iteration-best solutions deposit pheromones on their node-color pairs, biasing future ants toward historically successful assignments
-        \item \textbf{Alpha Parameter ($\alpha$):} Controls pheromone influence; higher $\alpha$ increases exploitation of learned patterns
+        \item Pheromone reinforcement from iteration-best solutions
+        \item Alpha parameter ($\alpha$) controls pheromone influence weight
+        \item Heuristic preference ($\eta[c] = 2.0$) for reusing existing colors
     \end{itemize}
     
     \item \textbf{Diversification (Exploration):}
     \begin{itemize}
-        \item \textbf{Pheromone Evaporation:} Global decay by factor $(1-\rho)$ prevents unlimited accumulation and allows forgetting of outdated patterns
-        \item \textbf{Heuristic Preference:} The heuristic function $\eta[c]$ assigns higher values ($2.0$) to already-used colors, encouraging color reuse to minimize $k$
-        \item \textbf{Beta Parameter ($\beta$):} Controls heuristic influence; higher $\beta$ increases diversification and exploration
-        \item \textbf{Probabilistic Selection:} Color selection is stochastic rather than greedy, allowing exploration of sub-optimal paths that may lead to better global solutions
-        \item \textbf{Random Node Ordering:} Each ant constructs solutions with different node visitation sequences, exploring diverse solution construction paths
-        \item \textbf{Multiple Ants:} Parallel construction of $m$ solutions per iteration samples different regions of the solution space simultaneously
+        \item Pheromone evaporation by factor $(1-\rho)$ to prevent premature convergence
+        \item Beta parameter ($\beta$) controls heuristic influence weight
+        \item Probabilistic color selection using roulette wheel sampling
+        \item Random node visitation ordering per ant
+        \item Parallel construction by $m$ ants per iteration
     \end{itemize}
 \end{itemize}
 
@@ -379,7 +372,7 @@ Patience Ratio & [0.3, 0.8] & 0.577 \\
     \item \textbf{Patience Ratio:} Fraction of total iterations to wait without improvement before early stopping. Optimal: 0.577 (approximately 150 iterations patience).
 \end{itemize}
 
-The extensive hyperparameter optimization process (Figure~\ref{fig:optuna_history}) was conducted over 46 hours using 6 parallel workers, executing 40 trials that accumulated 225 hours of total computational time. The optimization started with initial trials achieving 215 colors and progressively improved, ultimately converging on trial 19 with 200 colors as the best configuration—a 7\% improvement (15-color reduction). This optimization journey revealed critical insights into ACO's behavior for graph coloring. The tuning process demonstrated that \textbf{high beta} (strong heuristic influence) and \textbf{low rho} (slow evaporation) were essential for performance, fundamentally emphasizing intensification over diversification—a counterintuitive finding for a metaheuristic typically valued for exploration capabilities.
+The hyperparameter optimization process (Figure~\ref{fig:optuna_history}) executed 40 trials over 46 hours using 6 parallel workers. Trial 19 achieved the best configuration with 200 colors, representing a 7\% improvement over initial trials. The optimization revealed that high beta ($\beta=5.97$) and low rho ($\rho=0.097$) values were critical, indicating that strong heuristic guidance and slow pheromone decay are more beneficial than aggressive exploration for this problem.
 
 \begin{figure}[H]
     \centering
@@ -388,7 +381,7 @@ The extensive hyperparameter optimization process (Figure~\ref{fig:optuna_histor
     \label{fig:optuna_history}
 \end{figure}
 
-Deeper analysis through parameter slice plots (Figure~\ref{fig:optuna_slice}) and importance metrics (Figure~\ref{fig:optuna_importance}) unveils the underlying dynamics. The slice analysis reveals that \textbf{beta} (heuristic weight) exhibits a clear downward trend at higher values, indicating that stronger heuristic guidance consistently improves color minimization. Meanwhile, \textbf{iterations} demonstrate an optimal range around 250-300, beyond which diminishing returns occur. Interestingly, other parameters show scattered relationships, suggesting complex non-linear interactions that challenge simple parameter tuning. The importance analysis quantifies these observations: \textbf{iterations} and \textbf{beta} dominate ACO performance, while \textbf{rho} (evaporation rate) has surprisingly minimal impact. This hierarchy implies that for graph coloring, the algorithm benefits more from strong problem-specific heuristics and sufficient search time than from sophisticated pheromone dynamics—a finding that questions whether ACO's core mechanism (pheromone learning) is well-suited to this problem structure.
+Parameter slice plots (Figure~\ref{fig:optuna_slice}) and importance analysis (Figure~\ref{fig:optuna_importance}) provide deeper insights. Beta exhibits a clear downward trend at higher values, while iterations show an optimal range around 250-300. The importance analysis reveals that iterations and beta dominate performance, while rho has minimal impact. This suggests that sufficient search time and strong heuristic guidance contribute more to solution quality than pheromone dynamics for this problem.
 
 \begin{figure}[H]
     \centering
@@ -404,7 +397,7 @@ Deeper analysis through parameter slice plots (Figure~\ref{fig:optuna_slice}) an
     \label{fig:optuna_importance}
 \end{figure}
 
-The best trial configuration (trial 19) successfully produced a valid conflict-free coloring (zero conflicts) of the tuning instance gc\_500\_9 with 200 colors, as visualized in Figure~\ref{fig:best_trial}. This visualization confirms that despite the constructive approach's limitations in minimizing colors, the pheromone-guided construction mechanism effectively maintains feasibility by avoiding conflicts. The coloring demonstrates clear neighborhood patterns where adjacent vertices consistently receive different colors, validating the algorithm's constraint satisfaction capability even if color minimization remains suboptimal.
+The best trial configuration (trial 19) produced a conflict-free coloring of the tuning instance gc\_500\_9 with 200 colors, as visualized in Figure~\ref{fig:best_trial}. The visualization confirms that adjacent vertices receive different colors, validating the algorithm's constraint satisfaction capability.
 
 \begin{figure}[H]
     \centering
@@ -447,10 +440,7 @@ Each algorithm was executed 3 times per instance to assess statistical robustnes
 \section{Results and Discussion}
 \label{sec:results}
 
-The ACO algorithm's performance is evaluated against two baseline methods: \textbf{Greedy} (simple constructive heuristic) and \textbf{Tabu Search} (single-solution metaheuristic from Assignment 2). Performance is assessed using solution quality (number of colors), percent deviation from Best-Known Solutions (BKS), robustness (standard deviation over 3 runs), and computational time. The deviation from BKS is calculated as:
-$$
-\text{Deviation } (\%) = \frac{\text{Obtained Colors} - \text{BKS}}{\text{BKS}} \times 100
-$$
+ACO performance is evaluated against two baselines: Greedy (constructive heuristic) and Tabu Search (improvement-based metaheuristic). Performance metrics include solution quality (color count), deviation from Best-Known Solutions (BKS), robustness (standard deviation across 3 runs), and computational time. Deviation is calculated as: $(\text{colors} - \text{BKS}) / \text{BKS} \times 100\%$.
 
 \subsection{Comparative Performance Results}
 
@@ -496,11 +486,7 @@ The comparative performance analysis (Figures~\ref{fig:comparison_best} and~\ref
 
 The average performance over three runs (Figure~\ref{fig:comparison_avg}) exposes an additional scalability problem: the performance gap between ACO and Tabu Search widens dramatically as graph size increases. On dsjc250.5 (250 vertices), ACO uses approximately 56 colors versus TS's 35 colors—a 61\% increase. However, on dsjc1000.5 (1000 vertices), ACO requires 227 colors versus TS's 125 colors—an 82\% increase. This non-linear degradation indicates that ACO's population-based constructive approach struggles increasingly with larger problem instances, likely due to pheromone signal dilution across the expanding solution space. The consistency metrics further reveal that while ACO shows low standard deviation (indicating reproducible results), it reproducibly achieves poor solutions—consistency without quality provides little practical value.
 
-\textbf{Greedy Algorithm} serves as the fast constructive baseline with extremely fast execution (0.04-0.73 seconds), moderate solution quality (38-50\% deviation from BKS), and perfect consistency due to its deterministic nature. It is ideal for rapid prototyping or when computational resources are severely constrained.
-
-\textbf{Tabu Search} demonstrates superior optimization capability, consistently achieving best solution quality across all instances (21-46\% deviation from BKS). It improves 0.3-17.5\% over Greedy and 17.5-45.1\% over ACO, though at high computational cost (926-10,026 seconds). Its strength lies in starting with a Greedy solution and systematically improving through iterative color reduction.
-
-\textbf{ACO} demonstrates distinct characteristics as a constructive population-based method but achieves poorest solution quality (58-167\% deviation from BKS). It struggles with color minimization because it builds solutions without initial feasible colorings or iterative improvement. Despite using 82 parallel ants, execution time is comparable to TS (1134-13,670 seconds), and performance degradation increases with graph size (167\% deviation on dsjc1000.5 vs 99\% on dsjc250.5).
+The results reveal distinct performance profiles: Greedy achieves extremely fast execution (0.04-0.73 seconds) with 38-50\% deviation from BKS. Tabu Search demonstrates superior solution quality (21-46\% deviation) at high computational cost (926-10,026 seconds). ACO produces the poorest solutions (58-167\% deviation) despite comparable execution time to Tabu Search (1134-13,670 seconds), with performance degrading as graph size increases.
 
 
 
@@ -513,36 +499,16 @@ The average performance over three runs (Figure~\ref{fig:comparison_avg}) expose
     \label{fig:comparison_time}
 \end{figure}
 
-Despite using 82 parallel ants, ACO's computational performance (Figure~\ref{fig:comparison_time}) surprisingly matches Tabu Search's single-solution sequential approach rather than achieving the expected speedup from parallelization. The timing results show:
-\begin{itemize}
-    \item \textbf{dsjc250.5:} ACO is 23\% slower than TS (1134s vs 926s)
-    \item \textbf{dsjc500.9:} ACO is 13\% faster than TS (5854s vs 6731s)
-    \item \textbf{dsjc1000.5:} ACO is 36\% slower than TS (13670s vs 10026s)
-\end{itemize}
+Despite using 82 parallel ants, ACO's execution time (Figure~\ref{fig:comparison_time}) is comparable to Tabu Search's sequential approach. This occurs because ACO runs fewer iterations (261) with expensive per-iteration operations (82 probabilistic constructions plus pheromone updates), while TS executes more iterations (7000 per color level) with cheaper deterministic move evaluations. The result is an unfavorable cost-benefit ratio: ACO consumes similar computational resources to TS while delivering inferior solution quality (2-3× more colors).
 
-This near-parity occurs because the algorithms operate on fundamentally different time-complexity trade-offs:
-\begin{itemize}
-    \item ACO runs fewer iterations (261) but must execute 82 ant constructions per iteration with probabilistic color selection and pheromone updates
-    \item TS runs many more iterations (7000 per color level) with cheaper deterministic move evaluations
-    \item Both algorithms spend time on different operations: ACO on probabilistic selection and pheromone updates, TS on conflict counting and move evaluation
-\end{itemize}
+ACO's underperformance stems from several factors: (1) constructive approach without initialization from feasible solutions, unlike TS which improves from Greedy starting points; (2) local construction decisions without global conflict visibility; (3) pheromone signal dilution across large color sets (50-200 colors). Graph characteristics analysis shows ACO's deviation increases with size (96\% → 166\% for 250-1000 vertices) while TS remains stable (21\% → 46\%), indicating scalability limitations.
 
-The result is a troubling cost-benefit ratio—ACO consumes comparable computational resources to TS while delivering dramatically inferior solution quality (2-3× more colors). Greedy's extreme speed advantage (< 1 second) positions it as the clear winner when rapid approximate solutions suffice, while TS dominates when quality justifies computational investment.
-
-\textbf{Analysis of ACO Underperformance:} While the empirical results clearly demonstrate ACO's underperformance, the underlying causes likely involve several interconnected factors. First, ACO's \textbf{constructive nature} means it builds solutions from scratch without leveraging feasible starting points—unlike TS which begins with a ~40-color Greedy solution and reduces it to ~35 colors. Second, \textbf{local construction} leads each ant to make locally optimal decisions without global conflict minimization, whereas TS has a global view of all conflicts. Third, \textbf{pheromone sparsity} with large color sets (50-200 colors) may dilute signals across the matrix, weakening learning effects compared to TS's direct tabu list mechanism.
-
-\textbf{Graph Characteristics Impact:} All algorithms struggle more with high-density graphs (dsjc500.9, 90\% density) where conflict constraints are tighter, but ACO's degradation is most severe (58\% deviation vs 30\% for TS). ACO's deviation increases dramatically with graph size (96\% → 166\% from 250 to 1000 vertices), while TS remains relatively stable (21\% → 46\%), suggesting ACO's pheromone learning becomes less effective on larger instances. Surprisingly, ACO performs worst on the smallest instance (96\% deviation), suggesting the 82-ant population may be over-exploring on simpler graphs where focused intensification is more effective.
-
-\subsection{Summary of Key Findings}
-
-The comparative analysis reveals distinct paradigm trade-offs among the three algorithmic approaches. \textbf{Greedy} excels when speed is critical and moderate solution quality suffices (quick prototyping, real-time systems), achieving solutions in under one second with 38-50\% deviation from BKS. \textbf{Tabu Search} is preferred when solution quality is paramount and computational time is available (offline optimization, production systems), achieving 21-46\% deviation from BKS despite requiring 926-10,026 seconds. \textbf{ACO} demonstrates that population-based methods are not inherently superior to single-solution approaches—achieving 58-167\% deviation from BKS with comparable execution time to Tabu Search.
-
-Fundamentally, problem structure determines paradigm suitability rather than algorithmic category \cite{cadenas_comparative_2023}. Improvement-based methods like Tabu Search benefit from starting with feasible solutions, while constructive methods like ACO must learn from scratch. The effectiveness of metaheuristics depends heavily on problem-specific heuristics and operators; ACO's generic pheromone model may be insufficient for highly constrained problems like graph coloring. Ultimately, there is no universally best algorithm—the choice depends on specific requirements including time budget, quality needs, and problem characteristics.
+The comparative analysis reveals distinct algorithmic trade-offs: Greedy excels when speed is critical (< 1 second, 38-50\% deviation), Tabu Search delivers superior quality when time permits (926-10,026 seconds, 21-46\% deviation), while ACO underperforms both approaches (1134-13,670 seconds, 58-167\% deviation). The results demonstrate that problem structure determines paradigm suitability \cite{cadenas_comparative_2023}—improvement-based methods benefit from feasible initialization, while constructive approaches must learn from scratch. The effectiveness of metaheuristics depends heavily on problem-specific heuristics rather than algorithmic category alone.
 
 \section{Conclusion}
 \label{sec:conclusion}
 
-This work implements a constructive ACO approach for graph coloring with dynamic pheromone matrix expansion and parallel ant execution (82 ants) using multi-threading. Comprehensive hyperparameter tuning via Optuna framework over 40 trials optimized 6 parameters ($\alpha=1.54$, $\beta=5.97$, $\rho=0.097$, $m=82$, $Q=1.30$, iterations=261), providing a comparative empirical study of Greedy, Tabu Search, and ACO on DIMACS benchmarks (250-1000 vertices, 50-90\% density). The results reveal that while constructive methods avoid initial solution dependency, they achieve higher color counts than improvement-based approaches. Greedy provides instant solutions (< 1 second) with moderate quality (38-50\% deviation), Tabu Search delivers superior quality (21-46\% deviation) at high computational cost (926-10,026 seconds), while ACO's population-based approach surprisingly underperforms both baselines (58-167\% deviation) despite comparable execution time to Tabu Search. The findings demonstrate that algorithmic paradigm alone does not guarantee performance—problem structure, heuristic design, and initialization strategies critically determine metaheuristic effectiveness. Future enhancements might include degree-based heuristics, hybrid initialization from Tabu Search solutions, local search post-processing, or alternative pheromone representations to improve ACO's competitiveness for graph coloring.
+This work presents a comprehensive implementation and empirical evaluation of Ant Colony Optimization for graph coloring using parallel ant execution and systematic hyperparameter optimization via Optuna (40 trials, 6 parameters). Comparative analysis on DIMACS benchmarks reveals that ACO's constructive population-based approach underperforms both Greedy heuristic and Tabu Search metaheuristic (58-167\% deviation vs. 21-46\% for TS) despite comparable computational cost. The results demonstrate that algorithmic paradigm alone does not guarantee performance—problem structure, initialization strategies, and heuristic design critically determine metaheuristic effectivenes. For graph coloring, improvement-based methods that leverage feasible starting solutions outperform constructive approaches that build solutions from scratch. Future work should investigate hybrid approaches combining ACO's population-based search with local improvement operators, degree-based construction heuristics, or alternative pheromone models tailored to graph coloring constraints.
 
 \clearpage
 
