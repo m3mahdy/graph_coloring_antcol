@@ -86,7 +86,7 @@ The report is organized as follows: Section~\ref{sec:problem} defines the GCP fo
 \section{Problem Statement}
 \label{sec:problem}
 
-The \textbf{Graph Coloring Problem (GCP)} is formally defined for an undirected graph $G = (V, E)$, where $V$ represents the set of vertices and $E$ is the set of edges connecting these vertices. A coloring of $G$ is a function $C : V \to \mathbb{N}^+$ that assigns a color to each vertex in $V$, subject to the constraint that any two adjacent vertices must be assigned different colors. Formally, for any edge $(u, v) \in E$, it must hold that $C(u) \neq C(v)$. The primary objective of the GCP is to find the minimum number of colors required for a valid coloring, which is known as the chromatic number of $G$, denoted by $\chi(G)$ \cite{Bessedik2005, MendezDiaz2014}.
+The \textbf{Graph Coloring Problem (GCP)} is formally defined for an undirected graph $G = (V, E)$, where $V$ represents the set of vertices and $E$ is the set of edges connecting these vertices. A coloring of $G$ is a function $C : V \to \mathbb{N}^+$ that assigns a color to each vertex in $V$, subject to the constraint that any two adjacent vertices must be assigned different colors. Formally, for any edge $(u, v) \in E$, it must hold that $C(u) \neq C(v)$. The primary objective of the GCP is to find the minimum number of colors required for a valid coloring, which is known as the chromatic number of $G$, denoted by $\chi(G)$\cite{bessedik_ant_2005,mendez_diaz_tabu_2014}.
 \newline
 
 
@@ -133,7 +133,7 @@ The ultimate goal is to find the chromatic number $\chi(G)$, the minimum number 
 \section{Motivation}
 \label{sec:motivation}
 
-The GCP is $\text{NP}$-hard, meaning that finding the optimal chromatic number for large graphs is computationally infeasible using exact methods. \textbf{Ant Colony Optimization} is chosen as a population-based metaheuristic because:
+The GCP is $\text{NP}$-hard, meaning that finding the optimal chromatic number for large graphs is computationally infeasible using exact methods \cite{postigo_comparative_2021}. \textbf{Ant Colony Optimization} is chosen as a population-based metaheuristic because:
 
 \begin{itemize}
     \item \textbf{Constructive Approach:} ACO builds solutions from scratch rather than improving existing ones, eliminating dependency on initial solution quality.
@@ -153,7 +153,7 @@ The comparison between ACO (population-based) and Tabu Search (single-solution) 
 
 This report implements a \textbf{population-based metaheuristic} (Ant Colony Optimization) to address the computational complexity of the GCP. ACO leverages collective intelligence of multiple agents to explore the solution space through constructive pheromone-guided building of solutions.
 
-\textbf{Ant Colony Optimization (ACO)} is a nature-inspired population-based metaheuristic that mimics the foraging behavior of ants, which deposit pheromone trails to guide other ants toward good solutions \cite{Bessedik2005}. Unlike improvement-based methods like Tabu Search, ACO employs multiple artificial ants that work in parallel to construct complete solutions from scratch, eliminating dependency on initial solution quality.
+\textbf{Ant Colony Optimization (ACO)} is a nature-inspired population-based metaheuristic that mimics the foraging behavior of ants, which deposit pheromone trails to guide other ants toward good solutions \cite{bessedik_ant_2005}. Unlike improvement-based methods like Tabu Search, ACO employs multiple artificial ants that work in parallel to construct complete solutions from scratch, eliminating dependency on initial solution quality.
 
 \subsection{ACO Mechanism}
 The ACO algorithm for graph coloring operates through the following key mechanisms:
@@ -414,7 +414,7 @@ The best trial configuration (trial 19) successfully produced a valid conflict-f
 \end{figure}
 
 \subsection{Datasets}
-We use standardized \textbf{Benchmark Instances} from the DIMACS graph coloring library \cite{MendezDiaz2014} to ensure the generality of the results and enable comparison with existing literature. The characteristics of the selected test instances are shown in Table~\ref{tab:datasets}.
+We use standardized \textbf{Benchmark Instances} from the DIMACS graph coloring library to ensure the generality of the results and enable comparison with existing literature. The characteristics of the selected test instances are shown in Table~\ref{tab:datasets}.
 
 \begin{longtable}{|l|l|l|l|l|}
 \caption{DIMACS Benchmark Instances Characteristics}
@@ -537,7 +537,7 @@ The result is a troubling cost-benefit ratio—ACO consumes comparable computati
 
 The comparative analysis reveals distinct paradigm trade-offs among the three algorithmic approaches. \textbf{Greedy} excels when speed is critical and moderate solution quality suffices (quick prototyping, real-time systems), achieving solutions in under one second with 38-50\% deviation from BKS. \textbf{Tabu Search} is preferred when solution quality is paramount and computational time is available (offline optimization, production systems), achieving 21-46\% deviation from BKS despite requiring 926-10,026 seconds. \textbf{ACO} demonstrates that population-based methods are not inherently superior to single-solution approaches—achieving 58-167\% deviation from BKS with comparable execution time to Tabu Search.
 
-Fundamentally, problem structure determines paradigm suitability rather than algorithmic category. Improvement-based methods like Tabu Search benefit from starting with feasible solutions, while constructive methods like ACO must learn from scratch. The effectiveness of metaheuristics depends heavily on problem-specific heuristics and operators; ACO's generic pheromone model may be insufficient for highly constrained problems like graph coloring. Ultimately, there is no universally best algorithm—the choice depends on specific requirements including time budget, quality needs, and problem characteristics.
+Fundamentally, problem structure determines paradigm suitability rather than algorithmic category \cite{cadenas_comparative_2023}. Improvement-based methods like Tabu Search benefit from starting with feasible solutions, while constructive methods like ACO must learn from scratch. The effectiveness of metaheuristics depends heavily on problem-specific heuristics and operators; ACO's generic pheromone model may be insufficient for highly constrained problems like graph coloring. Ultimately, there is no universally best algorithm—the choice depends on specific requirements including time budget, quality needs, and problem characteristics.
 
 \section{Conclusion}
 \label{sec:conclusion}
