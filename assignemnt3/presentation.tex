@@ -73,6 +73,13 @@ $$\text{Minimize } k \quad \text{subject to} \quad F(C) = \sum_{(u,v) \in E} \ma
 % Section 2: Methodology
 \section{Methodology: ACO for Graph Coloring}
 
+\begin{frame}{ Ant Colony Optimization}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/ant.png}
+\end{figure}
+\end{frame}
+
 \begin{frame}{Why Ant Colony Optimization?}
 \textbf{Population-based Metaheuristic:}
 \begin{itemize}
@@ -125,6 +132,13 @@ $$P(c) = \frac{[\tau[v][c]]^{\alpha} \cdot [\eta[c]]^{\beta}}{\sum_{c'} [\tau[v]
 \end{columns}
 \end{frame}
 
+\begin{frame}{ Ant Colony Optimization for Graph Coloring}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/graph_coloring_with_ants.png}
+\end{figure}
+\end{frame}
+
 \begin{frame}{ACO Algorithm Pseudocode - Main Loop}
 \scriptsize
 \textbf{Initialize:} pheromone matrix $\tau[v][c] \leftarrow \tau_0$ \\[0.5em]
@@ -169,6 +183,15 @@ vertices $\leftarrow$ [starting\_node] + shuffle(V $\setminus$ \{starting\_node\
 
 \textbf{RETURN} best solution found
 \end{frame}
+
+
+\begin{frame}{ Mechanism Components}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.85\textwidth]{figures/solutions_components.png}
+\end{figure}
+\end{frame}
+
 
 \begin{frame}{Solution Representation \& Constraint Handling}
 \begin{block}{Solution Representation}
@@ -221,6 +244,14 @@ Dictionary mapping: $\text{Solution} = \{v_1: c_1, v_2: c_2, \dots, v_n: c_n\}$
 
 % Section 3: Experimental Setup
 \section{Hyperparameter Tuning}
+
+
+\begin{frame}{Hyperparameter Tuning}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/optuna.png}
+\end{figure}
+\end{frame}
 
 \begin{frame}{Hyperparameter Tuning with Optuna}
 \begin{block}{Optimization Setup}
@@ -306,6 +337,18 @@ Patience Ratio & [0.3, 0.8] & 0.577 \\
 \end{figure}
 \end{frame}
 
+
+
+% Section 4: Results
+\section{Results and Discussion}
+
+\begin{frame}{Results and Discussion}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/the3methods.png}
+\end{figure}
+\end{frame}
+
 \begin{frame}{Benchmark Datasets}
 \begin{table}
 \centering
@@ -329,9 +372,6 @@ dsjc1000.5 & 1000 & 249,826 & 50.0\% & 85 \\
     \item Statistical robustness assessment
 \end{itemize}
 \end{frame}
-
-% Section 4: Results
-\section{Results and Discussion}
 
 \begin{frame}{Comparative Performance Analysis}
 \begin{table}
@@ -405,7 +445,15 @@ dsjc1000.5 & 1000 & 249,826 & 50.0\% & 85 \\
 \end{block}
 \end{frame}
 
-\begin{frame}{Why ACO Underperforms}
+
+\begin{frame}{Why ACO Underperforms?}
+\begin{figure}
+    \centering
+    \includegraphics[width=0.9\textwidth]{figures/ant_col.png}
+\end{figure}
+\end{frame}
+
+\begin{frame}{Why ACO Underperforms?}
 \begin{enumerate}
     \item \textbf{Constructive Nature:}
     \begin{itemize}
